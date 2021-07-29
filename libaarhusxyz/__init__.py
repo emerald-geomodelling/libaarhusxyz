@@ -67,6 +67,8 @@ def _parse(inputfile, source=None, **kw):
 
     df, layer_dfs = _split_layer_columns(df)
 
+    headers["source"] = source
+
     return {"flightlines": df,
             "layer_data": layer_dfs,
             "model_info": headers}
