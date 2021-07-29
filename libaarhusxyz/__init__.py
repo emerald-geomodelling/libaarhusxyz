@@ -19,11 +19,15 @@ def _split_layer_columns(df):
         if group not in colgroups: colgroups[group] = []
         colgroups[group].append(col)
 
-    # Note: layer - 1 because we label layers 0..NLayers-1 rather than 1..NLayers
+    def columns_to_layers(columns):
+        layers = np.array([int(re.match("^.*?[(\[]?([0-9]+)[)\]]?$", col).groups()[0]) for col in columns])
+        layers -= np.min(layers)
+        return dict(zip(columns, layers))
+        
     colgroups = {key.strip("_"):
-                 df[value].rename(
-                     columns = {col:int(re.match("^.*?[(\[]?([0-9]+)[)\]]?$", col).groups()[0]) - 1 for col in value})
-                 for key, value in colgroups.items()}
+                 df[columns].rename(
+                     columns = columns_to_layers(columns))
+                 for key, columns in colgroups.items()}
 
     return df[per_sounding_cols], colgroups
 
