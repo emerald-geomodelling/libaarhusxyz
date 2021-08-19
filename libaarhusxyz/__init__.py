@@ -84,4 +84,33 @@ def parse(nameorfile, **kw):
     else:
         return _parse(nameorfile, **kw)
 
+def _un_split_layer_columns(data):
+    data=data.copy()
+    flightlines= data[list(data.keys())[0]]
+    dic={}
+    for key, value in data['layer_data'].items():
+        dic[key] = value
+        dic[key].columns= [key + '[' + str(col) + ']' for col in dic[key].columns]
+    merge_layers = pd.concat(dic.values(), axis=1)
+    merge_dfs= pd.concat((flightlines, merge_layers), axis=1)
+    return merge_dfs
+
+def _dump(data, file):
+    for key, value in data['model_info'].items():
+        if key != 'source':
+            file.write("/" + str(key) + "\n")
+            if isinstance(value, list):
+                file.write("/" + ' '.join(str(item) for item in value) + "\n")
+            else:
+                file.write("/" + str(value) + "\n")
+    file.write('/ ')
+    _un_split_layer_columns(data).to_csv(file, index=False, sep=' ', encoding='utf-8')
+
+def dump(data,nameorfile):
+    if isinstance(nameorfile, str):
+        with open(nameorfile, 'w') as f:
+            return _dump(data,f)
+    else:
+        return _dump(data,f)
+
         
