@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import re
+from . import transforms
 
 _RE_FLOATS = re.compile(r"^ *([-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)(\s+[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)*$")
 _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
@@ -112,40 +113,3 @@ def dump(data,nameorfile):
             return _dump(data,f)
     else:
         return _dump(data,f)
-
-    # Returns EM model with changed layer depth values
-def fixLayerDepths(em):
-    d_bot = em["layer_data"]["dep_bot"]
-    groups = em["layer_data"]["dep_top"].groupby(by=list(em["layer_data"]["dep_top"].columns)).groups
-
-    unique_depths = np.unique(d_bot.values.flatten())
-    u_d = pd.DataFrame({"unique": pd.Series(unique_depths)})
-
-    res_layer_data = {param: pd.DataFrame(index=em["layer_data"][param].index,
-                                          columns=np.arange(len(u_d.unique)))
-                      for param in em["layer_data"].keys()}
-
-    # em["model_info"]["number of layers"] = float(len(u_d.unique))-1
-    for g1 in groups.values():
-
-        g1_boundaries = pd.DataFrame({"top": em["layer_data"]["dep_top"].loc[g1].iloc[0],
-                                      "bot": em["layer_data"]["dep_bot"].loc[g1].iloc[0]}).fillna(np.inf)
-
-        for dest_layer, (top, bot) in enumerate(zip([0] + list(u_d.unique), list(u_d.unique))):
-
-            source_layer = g1_boundaries.index[(g1_boundaries.top <= top) & (g1_boundaries.bot >= bot)][0]
-
-            for param in res_layer_data.keys():
-
-                if param in ("dep_top", "dep_bot"):
-                    continue
-                if source_layer not in em["layer_data"][param].columns:
-                    param_data = np.nan
-                else:
-                    param_data = em["layer_data"][param].loc[g1, source_layer]
-                res_layer_data[param].loc[g1, dest_layer] = param_data
-            res_layer_data["dep_top"].loc[g1, dest_layer] = top
-            res_layer_data["dep_bot"].loc[g1, dest_layer] = bot
-
-    em["layer_data"] = res_layer_data
-    return em
