@@ -33,7 +33,7 @@ def _split_layer_columns(df):
 
 def _parse(inputfile, source=None, **kw):
     headers = {}
-
+    
     name = None
     col_names = None
 
@@ -51,7 +51,17 @@ def _parse(inputfile, source=None, **kw):
         if line == 'HEADER:':
             continue
         
-        if name is None:
+        if line.startswith("Number of gates for channel 1 is"):
+            headers["Number of gates for channel 1".lower()] = line.split()[-1]
+            name = None
+        elif line.startswith("Number of gates for channel 2 is"):
+            headers["Number of gates for channel 2".lower()] = line.split()[-1]
+        elif line.startswith("Gates for channel 1"):
+            headers["Gate times for channel 1".lower()] = line.split(": ")[-1]
+            name = None
+        elif line.startswith("Gates for channel 2"):
+            headers["Gate times for channel 2".lower()] = line.split(": ")[-1]
+        elif name is None:
             name = line.lower()
         else:
             headers[name] = line
