@@ -57,8 +57,12 @@ def _parse(inputfile, source=None, **kw):
         else:
             headers[name] = line
             name = None
-            
-    df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=headers.get('dummy', ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>", "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]), engine = 'python')
+
+    na_values = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
+                 "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
+    if "dummy" in headers:
+        na_values.append(headers["dummy"])
+    df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
 
     for key, value in headers.items():
         if " " in value and re.match(_RE_INTS, value):
