@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import re
+from . import transforms
 
 _RE_FLOATS = re.compile(r"^ *([-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)(\s+[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)*$")
 _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
@@ -112,5 +113,3 @@ def dump(data, nameorfile):
             return _dump(data, f)
     else:
         return _dump(data, f)
-
-        
