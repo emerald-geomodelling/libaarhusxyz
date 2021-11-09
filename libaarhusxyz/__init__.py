@@ -104,13 +104,13 @@ def _dump(data, file):
             else:
                 file.write("/" + str(value) + "\n")
     file.write('/ ')
-    _un_split_layer_columns(data).to_csv(file, index=False, sep=' ', encoding='utf-8')
+    _un_split_layer_columns(data).to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
 
-def dump(data,nameorfile):
+def dump(data, nameorfile):
     if isinstance(nameorfile, str):
         with open(nameorfile, 'w') as f:
-            return _dump(data,f)
+            return _dump(data, f)
     else:
-        return _dump(data,f)
+        return _dump(data, f)
 
         
