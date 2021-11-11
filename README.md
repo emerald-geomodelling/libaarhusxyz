@@ -35,5 +35,10 @@ Parser for the Aarhus Workbench XYZ format as documented in the [Workbench refer
     3  196.942396  576.447067   64.198719  159.602651  ...  895.423804  688.420991  242.795464  109.360430
     4  323.119234  470.146320  139.959078  105.866275  ...  953.291013  486.466359  740.259246  532.806194
 
+    # Upsample soundings to all have the same layer boundaries
+    >>> data = normalize_layer_depths(data)
 
+    # Save to new file
     >>> libaarhusxyz.dump(data, "newfile.xyz")
+    
+    
