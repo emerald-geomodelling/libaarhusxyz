@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import re
+from . import transforms
 
 _RE_FLOATS = re.compile(r"^ *([-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)(\s+[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)*$")
 _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
@@ -51,16 +52,16 @@ def _parse(inputfile, source=None, **kw):
         if line == 'HEADER:':
             continue
         
-        if line.startswith("Number of gates for channel 1 is"):
-            headers["Number of gates for channel 1".lower()] = line.split()[-1]
+        if line.startswith("Number of gates for channel"):
+            channel_nr=line.split("is")[0].split()[-1]  
+            headerword="Number of gates for channel {}".format(channel_nr).lower()
+            headers[headerword] = line.split()[-1]
             name = None
-        elif line.startswith("Number of gates for channel 2 is"):
-            headers["Number of gates for channel 2".lower()] = line.split()[-1]
-        elif line.startswith("Gates for channel 1"):
-            headers["Gate times for channel 1".lower()] = line.split(": ")[-1]
+        elif line.startswith("Gates for channel"):
+            channel_nr=line.split(":")[0].split()[-1]
+            headerword="Gate times for channel {}".format(channel_nr).lower()
+            headers[headerword] = line.split(": ")[-1]
             name = None
-        elif line.startswith("Gates for channel 2"):
-            headers["Gate times for channel 2".lower()] = line.split(": ")[-1]
         elif name is None:
             name = line.lower()
         else:
@@ -122,5 +123,3 @@ def dump(data,nameorfile):
             return _dump(data,f)
     else:
         return _dump(data,f)
-
-        
