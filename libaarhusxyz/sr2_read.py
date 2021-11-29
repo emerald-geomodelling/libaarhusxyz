@@ -9,7 +9,7 @@ Created on Mon Nov  1 15:44:28 2021
 import numpy as np
 
 
-def getAUXdata(headerlines):
+def get_aux_data(headerlines):
     sr2={"header":headerlines[0]}
     words=headerlines[1].split()
     sr2["Channel#"]=words[0]
@@ -22,7 +22,7 @@ def getAUXdata(headerlines):
     return sr2
 
 
-def getSystemResponse(text):
+def get_system_response(text):
     data=[]
     for lines in text:
         numberstrings   = lines.split()
@@ -34,7 +34,7 @@ def getSystemResponse(text):
 def readfile(sr2_filename):
     with open(sr2_filename) as f:
         text=f.readlines()
-    sr2=getAUXdata(text[:2])
-    sr2["system_response"]=getSystemResponse(text[2:])
+    sr2=get_aux_data(text[:2])
+    sr2["system_response"]=get_system_response(text[2:])
     return sr2
 
