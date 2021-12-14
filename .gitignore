@@ -6,3 +6,4 @@ build
 .gitignore
 example/data
 example/*.py
+.idea
