@@ -31,7 +31,7 @@ def get_system_response(text):
     return np.array(data)
 
 
-def readfile(sr2_filename):
+def parse(sr2_filename):
     with open(sr2_filename) as f:
         text=f.readlines()
     sr2=get_aux_data(text[:2])

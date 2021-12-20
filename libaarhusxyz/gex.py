@@ -64,7 +64,7 @@ def parse_parameters(textlines):
 
 
 
-def readfile(filename):
+def parse(filename):
     sections, sectionheaders = split_sections(filename)
     gex={"header":sections["header"]}
     for header in sectionheaders:
