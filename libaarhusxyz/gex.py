@@ -10,10 +10,7 @@ import numpy as np
 
 
 
-def split_sections(gex_infile):
-    with open(gex_infile) as f:
-        text=f.readlines()
-    
+def split_sections(text):    
     sectionheaders=[]
     for line in text:
         condition = np.logical_and( ("[" in line) , ("]" in line) )
@@ -62,13 +59,19 @@ def parse_parameters(textlines):
             general[key]=np.array(general[key])
     return general
 
-
-
-def parse(filename):
-    sections, sectionheaders = split_sections(filename)
+def _parse(inputfile):
+    sections, sectionheaders = split_sections(inputfile.readlines())
     gex={"header":sections["header"]}
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
         print("header {} parsed".format(header))
     return gex
+
+def parse(nameorfile, **kw):
+    if isinstance(nameorfile, str):
+        with open(nameorfile, 'r') as f:
+            return _parse(f, **kw)
+    else:
+        return _parse(nameorfile, **kw)
+
 

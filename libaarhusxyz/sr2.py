@@ -30,11 +30,17 @@ def get_system_response(text):
         data.append(numbers)
     return np.array(data)
 
-
-def parse(sr2_filename):
-    with open(sr2_filename) as f:
-        text=f.readlines()
+def _parse(inputfile):
+    text=inputfile.readlines()
     sr2=get_aux_data(text[:2])
     sr2["system_response"]=get_system_response(text[2:])
     return sr2
+
+def parse(nameorfile, **kw):
+    if isinstance(nameorfile, str):
+        with open(nameorfile, 'r') as f:
+            return _parse(f, **kw)
+    else:
+        return _parse(nameorfile, **kw)
+
 
