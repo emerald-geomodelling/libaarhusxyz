@@ -4,6 +4,15 @@ Parser for the Aarhus Workbench XYZ format as documented in the [Workbench refer
 
 
 
+
+The library can also read
+- Geometry files (.gex), defining the SkyTEM system and the used waveform
+- system response files (.sr2)
+- usage examples can be found under ./examples  
+
+
+
+
 # Usage
 
     >>> import libaarhusxyz
@@ -43,4 +52,4 @@ Parser for the Aarhus Workbench XYZ format as documented in the [Workbench refer
     # Save to new file
     >>> libaarhusxyz.dump(data, "newfile.xyz")
     
-    
+
