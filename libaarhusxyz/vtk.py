@@ -128,7 +128,7 @@ def _vtk_cell_data(points_array):
     num_nodes = np.ones( (cell_indices_np.shape[0],1), dtype=np.int)*4
 
     cells_out_vtk = np.concatenate( (num_nodes,cell_indices_np),axis=1)
-    cell_types_out_vtk = np.ones( (cell_indices_np.shape[0],1), dtype=np.int)*9
+    cell_types_out_vtk = np.ones( (cell_indices_np.shape[0],1), dtype=np.int)*9 # 9 is for VTK_QUAD cell type
 
     return point_coordinates, cell_indices_np, cells_out_vtk, cell_types_out_vtk
 
