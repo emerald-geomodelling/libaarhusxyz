@@ -52,4 +52,6 @@ The library can also read
     # Save to new file
     >>> libaarhusxyz.dump(data, "newfile.xyz")
     
-
+    # Export as a VTK file for visualization
+    >>> import libaarhusxyz.vtk
+    >>> libaarhusxyz.vtk.dump(data, "newfile.vtk")
