@@ -108,17 +108,10 @@ def _un_split_layer_columns(data):
         dic[key].columns= [key + '[' + str(col) + ']' for col in dic[key].columns]
     merge_layers = pd.concat(dic.values(), axis=1)
     merge_dfs= pd.concat((flightlines, merge_layers), axis=1)
+    merge_dfs.insert(0, '/', '')
     return merge_dfs
 
 def _dump(data, file):
-    for key, value in data['model_info'].items():
-        if key != 'source':
-            file.write("/" + str(key) + "\n")
-            if isinstance(value, list):
-                file.write("/" + ' '.join(str(item) for item in value) + "\n")
-            else:
-                file.write("/" + str(value) + "\n")
-    file.write('/ ')
     _un_split_layer_columns(data).to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
 
 def dump(data, nameorfile):
