@@ -8,7 +8,7 @@ The library can also read
 - System response files (.sr2)
 - Workbench column mappings (.alc)
 - Usage examples can be found under ./examples  
-- 
+
 
 # Usage
 
