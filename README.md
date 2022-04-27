@@ -56,6 +56,7 @@ The library can also read
     >>> import libaarhusxyz.vtk
     >>> libaarhusxyz.vtk.dump(data, "newfile.vtk")
 
+Both `parse()` and `dump()` takes an optional `alcfile` argument. `parse()` uses this to rename columns to fit the standard column names used by Aarhus Workbench, while `dump()` writes an ALC file listing all columns that do have standard names recognized by Aarhus Workbench.
 
 # Data structure in memory:
 ![data structure](https://github.com/emerald-geomodelling/libaarhusxyz/blob/master/example/libaarhus.png)
