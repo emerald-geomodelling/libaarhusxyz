@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import re
 from . import transforms
+from . import alc
+
 
 _RE_FLOATS = re.compile(r"^ *([-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)(\s+[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)*$")
 _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
@@ -32,7 +34,7 @@ def _split_layer_columns(df):
 
     return df[per_sounding_cols], colgroups
 
-def _parse(inputfile, source=None, **kw):
+def _parse(inputfile, source=None, alcfile=None, **kw):
     headers = {}
     
     name = None
@@ -72,7 +74,7 @@ def _parse(inputfile, source=None, **kw):
                  "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
     if "dummy" in headers:
         na_values.append(headers["dummy"])
-    df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
+    full_df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
 
     for key, value in headers.items():
         if " " in value and re.match(_RE_INTS, value):
@@ -84,14 +86,27 @@ def _parse(inputfile, source=None, **kw):
         elif re.match(_RE_INT, value):
             headers[key] = int(value)            
 
-    df, layer_dfs = _split_layer_columns(df)
+    alcdata = None
+    if alcfile is not None:
+        alcdata = alc.parse(alcfile, full_df.columns)
+        mapping = alcdata["mapping"].loc[alcdata["mapping"].position >= 0]
+        mapping = mapping.set_index("column")["canonical_name"].to_dict()
+        full_df = full_df.rename(columns=mapping)
+        
+    df, layer_dfs = _split_layer_columns(full_df)
 
     headers["source"] = source
 
-    return {"flightlines": df,
+    res = {"flightlines": df,
             "layer_data": layer_dfs,
-            "model_info": headers}
+            "model_info": headers,
+            "file_meta": {"columns": full_df.columns}}
 
+    if alcdata is not None:
+        res["alc_info"] = alcdata["meta"]
+    
+    return res
+    
 def parse(nameorfile, **kw):
     if isinstance(nameorfile, str):
         with open(nameorfile, 'r') as f:
@@ -110,7 +125,8 @@ def _un_split_layer_columns(data):
     merge_dfs= pd.concat((flightlines, merge_layers), axis=1)
     return merge_dfs
 
-def _dump(data, file):
+def _dump(data, file, alcfile=None):
+    df = _un_split_layer_columns(data)
     for key, value in data['model_info'].items():
         if key != 'source':
             file.write("/" + str(key) + "\n")
@@ -119,11 +135,14 @@ def _dump(data, file):
             else:
                 file.write("/" + str(value) + "\n")
     file.write('/ ')
-    _un_split_layer_columns(data).to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
+    df.to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
 
-def dump(data, nameorfile):
+    if alcfile is not None:
+        alc.dump(data, alcfile)
+
+def dump(data, nameorfile, **kw):
     if isinstance(nameorfile, str):
         with open(nameorfile, 'w') as f:
-            return _dump(data, f)
+            return _dump(data, f, **kw)
     else:
-        return _dump(data, f)
+        return _dump(data, f, **kw)
