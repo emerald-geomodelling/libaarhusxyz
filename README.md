@@ -55,3 +55,7 @@ The library can also read
     # Export as a VTK file for visualization
     >>> import libaarhusxyz.vtk
     >>> libaarhusxyz.vtk.dump(data, "newfile.vtk")
+
+
+# Data structure in memory:
+![data structure](https://github.com/emerald-geomodelling/libaarhusxyz/blob/master/example/libaarhus.png)
