@@ -32,9 +32,11 @@ def is_supported_field(fieldname):
         if m: return m
     return False
 
-def _dump(xyz, f):
+def _dump(xyz, f, columns=None):
+    if columns is None:
+        columns = xyz["file_meta"]["columns"]
     rows = [{"canonical_name": col, "position": idx + 1}
-             for idx, col in enumerate(xyz["file_meta"]["columns"])
+             for idx, col in enumerate(columns)
              if is_supported_field(col)]
     
     channels = set([row["canonical_name"][len("Gate_Ch"):].split("_")[0]

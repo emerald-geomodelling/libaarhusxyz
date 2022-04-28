@@ -138,7 +138,7 @@ def _dump(data, file, alcfile=None):
     df.to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
 
     if alcfile is not None:
-        alc.dump(data, alcfile)
+        alc.dump(data, alcfile, columns=df.columns)
 
 def dump(data, nameorfile, **kw):
     if isinstance(nameorfile, str):
