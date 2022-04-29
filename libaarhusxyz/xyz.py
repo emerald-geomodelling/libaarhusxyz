@@ -3,6 +3,10 @@
 import pandas as pd
 import numpy as np
 import re
+try:
+    import projnames
+except:
+    projnames = None
 from . import transforms
 from . import alc
 
@@ -197,6 +201,14 @@ class XYZ(object):
                 layer_constants[key] = layer_df.iloc[0]
         return layer_constants.reset_index().rename(columns={"index": "layer"})
 
+    @property
+    def projection(self):
+        if projnames is None:
+            return None
+        if "coordinate system" not in self.model_info:
+            return None
+        return projnames.search(self.model_info["coordinate system"])
+                
     def to_dict(self):
         return self.model_dict
         
@@ -252,6 +264,7 @@ class XYZ(object):
             "Soundings: %s" % (len(self.flightlines),),
             "Flightlines: %s" % (len(self.flightlines[self.line_id_column].unique()),) if self.line_id_column in self.flightlines.columns else "No line_id column to distinguish lines.",
             "Maximum layer depth: %s" % (max_depth,),
+            "Projection: %s" % self.projection,
             repr(self.flightlines[[self.x_column, self.y_column]].describe().loc[["min", "max"]]),
             resistivity,
             "",
