@@ -3,6 +3,10 @@
 import pandas as pd
 import numpy as np
 import re
+try:
+    import projnames
+except:
+    projnames = None
 from . import transforms
 from . import alc
 
@@ -157,3 +161,123 @@ def dump(data, nameorfile, **kw):
             return _dump(data, f, **kw)
     else:
         return _dump(data, f, **kw)
+
+
+
+_dump_function = dump
+
+class XYZ(object):
+    def __new__(cls, *arg, **kw):
+        self = object.__new__(cls)
+        if isinstance(arg[0], dict):
+            self.model_dict = arg[0]
+        else:
+            self.model_dict = parse(*arg, **kw)
+        return self
+
+    def dump(self, *arg, **kw):
+        _dump_function(self.model_dict, *arg, **kw)
+
+    @property
+    def title(self):
+        return self.model_info.get("title", self.model_info.get("source", "Unknown"))
+        
+    @property
+    def model_info(self):
+        return self.model_dict["model_info"]
+    @property
+    def flightlines(self):
+        return self.model_dict["flightlines"]
+    @property
+    def layer_data(self):
+        return self.model_dict["layer_data"]
+    
+    @property
+    def layer_params(self):
+        layer_dfs = self.model_dict["layer_data"]
+        layer_constants = pd.DataFrame(index=next(iter(layer_dfs.values())).columns)
+        for key, layer_df in layer_dfs.items():
+            if (layer_df.max() - layer_df.min()).max() == 0.0:
+                layer_constants[key] = layer_df.iloc[0]
+        return layer_constants.reset_index().rename(columns={"index": "layer"})
+
+    @property
+    def projection(self):
+        if projnames is None:
+            return None
+        if "coordinate system" not in self.model_info:
+            return None
+        return projnames.search(self.model_info["coordinate system"])
+                
+    def to_dict(self):
+        return self.model_dict
+        
+    def __getattr__(self, name):
+        # This outer if is only here to make pickle not have a hickup
+        if name not in ("model_info", "layer_data", "layer_params"):
+            if name in self.model_info:
+                return self.model_info[name]
+            if name in self.layer_data:
+                return self.layer_data[name]
+            if name in self.layer_params:
+                return self.layer_params[name]
+        raise AttributeError(name)
+
+    def __getitem__(self, line_id):
+        return XYZLine(self, line_id)
+
+    def __iter__(self):
+        for line_id in self.flightlines["line_id"].unique():
+            yield self[line_id]
+
+    @property
+    def line_id_column(self):
+        for colname in ("line_id", "line_no"):
+            if colname in self.flightlines.columns:
+                return colname
+    @property
+    def x_column(self):
+        for colname in ("x", "utmx"):
+            if colname in self.flightlines.columns:
+                return colname
+    @property
+    def y_column(self):
+        for colname in ("y", "utmy"):
+            if colname in self.flightlines.columns:
+                return colname
+            
+    def __repr__(self):
+        max_depth = None
+        if "dep_bot" in self.layer_data:
+            depths = self.layer_data["dep_bot"].melt()["value"]
+            max_depth = depths.loc[~np.isinf(depths)].max()
+
+        resistivity = ""
+        if "resistivity" in self.layer_data:
+            resistivity = repr(pd.DataFrame(self.resistivity.melt().rename(columns={"value": "Resistivity"})["Resistivity"].describe()))
+            
+        return "\n".join([
+            self.title,
+            "--------------------------------",
+            repr(pd.DataFrame([self.model_info]).T),
+            "",
+            "Soundings: %s" % (len(self.flightlines),),
+            "Flightlines: %s" % (len(self.flightlines[self.line_id_column].unique()),) if self.line_id_column in self.flightlines.columns else "No line_id column to distinguish lines.",
+            "Maximum layer depth: %s" % (max_depth,),
+            "Projection: %s" % self.projection,
+            repr(self.flightlines[[self.x_column, self.y_column]].describe().loc[["min", "max"]]),
+            resistivity,
+            "",
+            "Layer data: %s" % (", ".join(set(self.layer_data.keys()) - set(self.layer_params.keys())),),
+            "Layer params: %s" % (", ".join(self.layer_params.keys(),)),
+            ])
+            
+            
+class XYZLine(object):
+    def __init__(self, model, line_id):
+        self.model = model
+        self.line_id = line_id
+    
+    @property
+    def xdist(self):
+        return self.model.flightlines[self.model.flightlines["line_id"] == self.line_id]["xdist"].max()
