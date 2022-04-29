@@ -12,18 +12,30 @@ _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
 _RE_FLOAT = re.compile(r"^[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?$")
 _RE_INT = re.compile(r"^[-+]?[0-9]+$")
 
+# We match these types of column names:
+#   rho_i[6]
+#   rho_i(6)
+#   rho_i_6
+# Note that we make sure not to match e.g. Misc05, as that interfers
+# with the naming convention used in Aaarhus Workbench / ALC files.
+_RE_LAYER_COL = re.compile(r"^(.*?)[(_\[]([0-9]+)[)\]]?$")
+
+_NA_VALUES = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
+             "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
+
+
 def _split_layer_columns(df):
-    per_layer_cols = [col for col in df.columns if re.match(r"^.*?[(\[]?[0-9]+[)\]]?$", col)]
+    per_layer_cols = [col for col in df.columns if re.match(_RE_LAYER_COL, col)]
     per_sounding_cols = [col for col in df.columns if not col in per_layer_cols]
 
     colgroups = {}
     for col in per_layer_cols:
-        group = re.match("^(.*?)[(\[]?[0-9]+[)\]]?$", col).groups()[0]
+        group = re.match(_RE_LAYER_COL, col).groups()[0]
         if group not in colgroups: colgroups[group] = []
         colgroups[group].append(col)
 
     def columns_to_layers(columns):
-        layers = np.array([int(re.match("^.*?[(\[]?([0-9]+)[)\]]?$", col).groups()[0]) for col in columns])
+        layers = np.array([int(re.match(_RE_LAYER_COL, col).groups()[1]) for col in columns])
         layers -= np.min(layers)
         return dict(zip(columns, layers))
         
@@ -70,10 +82,9 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
             headers[name] = line
             name = None
 
-    na_values = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
-                 "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
+    na_values = _NA_VALUES
     if "dummy" in headers:
-        na_values.append(headers["dummy"])
+        na_values + na_values + [headers["dummy"]]
     full_df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
 
     for key, value in headers.items():
