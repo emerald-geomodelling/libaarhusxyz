@@ -17,6 +17,8 @@ def parse(nameorfile, xyz_columns=None):
 
 supported_fields = ["DateTime","Date","Time","Flight","Line","GdSpeed","Alt","DEM",
                     "Magnetic","PowerLineMonitor",
+                    "Misc1","Misc2","Misc3","Misc4",
+                    "Current_Ch01","Current_Ch02",
                     "RxPitch","RxRoll","Topography","TxAltitude",
                     "TxOffTime","TxOnTime","TxPeakTime",
                     "TxPitch","TxRoll","TxRxHoriSep","TxRxVertSep","UTMX","UTMY",
@@ -33,8 +35,20 @@ def is_supported_field(fieldname):
     return False
 
 def _dump(xyz, f, columns=None):
+    print(columns)
     if columns is None:
         columns = xyz["file_meta"]["columns"]
+    else:
+        columns_=[]
+        for column_name in columns:
+            words=re.split('\[|\]', column_name)
+            if len(words)==1:
+                columns_.append(words[0])
+            else:
+                newname="{0}_{1:02d}".format(words[0],int(words[1])+1)
+                columns_.append(newname)
+        columns=columns_
+    print(columns)
     rows = [{"canonical_name": col, "position": idx + 1}
              for idx, col in enumerate(columns)
              if is_supported_field(col)]
