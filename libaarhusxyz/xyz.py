@@ -169,10 +169,11 @@ _dump_function = dump
 class XYZ(object):
     def __new__(cls, *arg, **kw):
         self = object.__new__(cls)
-        if isinstance(arg[0], dict):
-            self.model_dict = arg[0]
-        else:
-            self.model_dict = parse(*arg, **kw)
+        if arg or kw:
+            if arg and isinstance(arg[0], dict):
+                self.model_dict = arg[0]
+            else:
+                self.model_dict = parse(*arg, **kw)
         return self
 
     def dump(self, *arg, **kw):
@@ -214,7 +215,7 @@ class XYZ(object):
         
     def __getattr__(self, name):
         # This outer if is only here to make pickle not have a hickup
-        if name not in ("model_info", "layer_data", "layer_params"):
+        if name not in ("model_dict", "model_info", "layer_data", "layer_params"):
             if name in self.model_info:
                 return self.model_info[name]
             if name in self.layer_data:
