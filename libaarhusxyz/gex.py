@@ -28,7 +28,7 @@ def split_sections(text):
     sectionlineidx.append(len(text)+1)
     sections={"header":text[0]}
     for k in range(len(sectionheaders)):
-        sections[sectionheaders[k]]=text[sectionlineidx[k]+1:sectionlineidx[k+1]-1]
+        sections[sectionheaders[k]]=text[sectionlineidx[k]+1:sectionlineidx[k+1]]
     return sections, sectionheaders
 
 def parse_parameters(textlines):
