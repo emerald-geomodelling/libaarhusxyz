@@ -31,7 +31,7 @@ _NA_VALUES = [9999, 9999.9, "9999", "9999.9", "", "#N/A", "#N/A N/A", "#NA", "-1
 def _split_layer_columns(df):
     per_layer_cols = [col for col in df.columns if re.match(_RE_LAYER_COL, col)]
     per_sounding_cols = [col for col in df.columns if not col in per_layer_cols]
-
+    
     colgroups = {}
     for col in per_layer_cols:
         group = re.match(_RE_LAYER_COL, col).groups()[0]
