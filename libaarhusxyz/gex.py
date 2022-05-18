@@ -64,7 +64,7 @@ def _parse(inputfile):
     gex={"header":sections["header"]}
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
-        print("header {} parsed".format(header))
+        # print("header {} parsed".format(header))
     return gex
 
 def parse(nameorfile, **kw):
