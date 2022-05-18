@@ -15,7 +15,17 @@ def parse(nameorfile, xyz_columns=None):
     return {"meta": meta,
             "mapping": mapping}
 
-supported_fields = ["Date","Line","Magnetic","Misc1 ","Misc2","Misc3","Misc4","PowerLineMonitor","RxPitch","RxRoll","Time","Topography","TxAltitude","TxOffTime","TxOnTime","TxPeakTime","TxPitch","TxRoll","TxRxHoriSep","TxRxVertSep","UTMX","UTMY","Current_Ch01","Current_Ch02","Gate_Ch01.*","Gate_Ch02.*","STD_Ch01.*","STD_Ch02.*"]
+supported_fields = ["DateTime","Date","Time","Flight","Line","GdSpeed","Alt","DEM",
+                    "Magnetic","PowerLineMonitor",
+                    "Misc1","Misc2","Misc3","Misc4",
+                    "Current_Ch01","Current_Ch02",
+                    "RxPitch","RxRoll","Topography","TxAltitude",
+                    "TxOffTime","TxOnTime","TxPeakTime",
+                    "TxPitch","TxRoll","TxRxHoriSep","TxRxVertSep","UTMX","UTMY",
+                    "Current_Ch01","Current_Ch02",
+                    "Gate_Ch01.*","Gate_Ch02.*",
+                    "STD_Ch01.*","STD_Ch02.*",
+                    "InUse_Ch01.*","InUse_Ch02.*"]
 
 
 def is_supported_field(fieldname):
@@ -27,10 +37,19 @@ def is_supported_field(fieldname):
 def _dump(xyz, f, columns=None):
     if columns is None:
         columns = xyz["file_meta"]["columns"]
+    else:
+        columns_=[]
+        for column_name in columns:
+            words=re.split('\[|\]', column_name)
+            if len(words)==1:
+                columns_.append(words[0])
+            else:
+                newname="{0}_{1:02d}".format(words[0],int(words[1])+1)
+                columns_.append(newname)
+        columns=columns_
     rows = [{"canonical_name": col, "position": idx + 1}
              for idx, col in enumerate(columns)
              if is_supported_field(col)]
-    
     channels = set([row["canonical_name"][len("Gate_Ch"):].split("_")[0]
                     for row in rows
                     if row["canonical_name"].startswith("Gate_Ch")])
