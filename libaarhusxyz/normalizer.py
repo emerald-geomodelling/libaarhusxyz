@@ -170,7 +170,8 @@ def normalize(model, project_crs=None, required_columns = ['resdata',"restotal",
          * Normalizes naming and format to our internal format
          * Reprojects coordinates
          * Calculates xdist
-         * Assigns ID:s
+         * Calculate z coordinates
+         * Add missing columns (filled with NaNs)
     """
 
     normalize_headers(model)
