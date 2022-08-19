@@ -215,6 +215,8 @@ class XYZ(object):
 
     @property
     def projection(self):
+        if 'projection' in self.model_info:
+            return self.model_info['projection']
         if projnames is None:
             return None
         if "coordinate system" not in self.model_info:
