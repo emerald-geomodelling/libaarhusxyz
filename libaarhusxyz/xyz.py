@@ -186,12 +186,23 @@ class XYZ(object):
     @property
     def model_info(self):
         return self.model_dict["model_info"]
+    @model_info.setter
+    def model_info(self, value):
+        self.model_dict["model_info"] = value
+        
     @property
     def flightlines(self):
         return self.model_dict["flightlines"]
+    @flightlines.setter
+    def flightlines(self, value):
+        self.model_dict["flightlines"] = value
+        
     @property
     def layer_data(self):
         return self.model_dict["layer_data"]
+    @layer_data.setter
+    def layer_data(self, value):
+        self.model_dict["layer_data"] = value
     
     @property
     def layer_params(self):
@@ -224,6 +235,16 @@ class XYZ(object):
                 return self.layer_params[name]
         raise AttributeError(name)
 
+    def __setattr__(self, name, value):
+        if name not in ("model_dict", "model_info", "layer_data", "layer_params"):
+            if name in self.model_info:
+                self.model_info[name] = value
+            if name in self.layer_data:
+                self.layer_data[name] = value
+            if name in self.layer_params:
+                self.layer_params[name] = value
+        object. __setattr__(self, name, value)
+    
     def __getitem__(self, line_id):
         return XYZLine(self, line_id)
 
