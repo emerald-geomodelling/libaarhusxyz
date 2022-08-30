@@ -16,17 +16,36 @@ _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
 _RE_FLOAT = re.compile(r"^[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?$")
 _RE_INT = re.compile(r"^[-+]?[0-9]+$")
 
-# We match these types of column names:
+# We match these types of column names for layer data:
 #   rho_i[6]
 #   rho_i(6)
 #   rho_i_6
-# Note that we make sure not to match e.g. Misc05, as that interfers
-# with the naming convention used in Aaarhus Workbench / ALC files.
-_RE_LAYER_COL = re.compile(r"^(.*?)[(_\[]([0-9]+)[)\]]?$")
+#   rho_i6
+# Previously we did not match numbered columns without a separator before the suffix (e.g., rho_i6), but changed this
+# on 2022-08-30. We do a check to catch single layer columns with a numerical suffix now with the function
+# _transfer_per_location_cols_with_numerical_suffix.
+# There may be lingering issues with the naming convention used in Aaarhus Workbench / ALC files.
+_RE_LAYER_COL = re.compile(r"^(.*?)[(_\[]?([0-9]+)[)\]]?$")
 
 _NA_VALUES = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
              "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
 
+def _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_cols):
+    """
+    Search through the dictionary colgroups. If any list of columns has a length of only 1, parse this as a
+    per-sounding columns instead, and transfer columns to the list per_sounding_cols.
+
+    @param colgroups: dicitonary of group_name (str) on keys and group columns (list) as values
+    @param per_sounding_cols: list of columns to parse as per-souding locations
+    @return: modified colgroups and per_sounding_cols
+    """
+    groups_to_delete = []
+    for group_name, group_cols in colgroups.items():
+        if len(group_cols) < 2:
+            per_sounding_cols += group_cols
+            groups_to_delete.append(group_name)
+    for group_name in groups_to_delete: colgroups.pop(group_name)
+    return colgroups, per_sounding_cols
 
 def _split_layer_columns(df):
     per_layer_cols = [col for col in df.columns if re.match(_RE_LAYER_COL, col)]
@@ -37,6 +56,8 @@ def _split_layer_columns(df):
         group = re.match(_RE_LAYER_COL, col).groups()[0]
         if group not in colgroups: colgroups[group] = []
         colgroups[group].append(col)
+
+    colgroups, per_sounding_cols = _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_cols)
 
     def columns_to_layers(columns):
         layers = np.array([int(re.match(_RE_LAYER_COL, col).groups()[1]) for col in columns])
