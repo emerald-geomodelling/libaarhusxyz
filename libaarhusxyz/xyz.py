@@ -24,6 +24,7 @@ _RE_INT = re.compile(r"^[-+]?[0-9]+$")
 # with the naming convention used in Aaarhus Workbench / ALC files.
 _RE_LAYER_COL = re.compile(r"^(.*?)[(_\[]([0-9]+)[)\]]?$")
 
+
 _NA_VALUES = [9999, 9999.9, "9999", "9999.9", "", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
              "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
 
