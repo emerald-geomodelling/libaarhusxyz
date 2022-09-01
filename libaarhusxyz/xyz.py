@@ -24,14 +24,15 @@ _RE_INT = re.compile(r"^[-+]?[0-9]+$")
 # with the naming convention used in Aaarhus Workbench / ALC files.
 _RE_LAYER_COL = re.compile(r"^(.*?)[(_\[]([0-9]+)[)\]]?$")
 
-_NA_VALUES = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
+
+_NA_VALUES = [9999, 9999.9, "9999", "9999.9", "", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
              "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
 
 
 def _split_layer_columns(df):
     per_layer_cols = [col for col in df.columns if re.match(_RE_LAYER_COL, col)]
     per_sounding_cols = [col for col in df.columns if not col in per_layer_cols]
-
+    
     colgroups = {}
     for col in per_layer_cols:
         group = re.match(_RE_LAYER_COL, col).groups()[0]
@@ -142,13 +143,14 @@ def _un_split_layer_columns(data):
 
 def _dump(data, file, alcfile=None):
     df = _un_split_layer_columns(data)
-    for key, value in data['model_info'].items():
-        if key != 'source':
-            file.write("/" + str(key) + "\n")
-            if isinstance(value, list):
-                file.write("/" + ' '.join(str(item) for item in value) + "\n")
-            else:
-                file.write("/" + str(value) + "\n")
+    if alcfile==None:
+        for key, value in data['model_info'].items():
+            if key != 'source':
+                file.write("/" + str(key) + "\n")
+                if isinstance(value, list):
+                    file.write("/" + ' '.join(str(item) for item in value) + "\n")
+                else:
+                    file.write("/" + str(value) + "\n")
     file.write('/ ')
     df.to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
 

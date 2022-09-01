@@ -28,7 +28,7 @@ def split_sections(text):
     sectionlineidx.append(len(text)+1)
     sections={"header":text[0]}
     for k in range(len(sectionheaders)):
-        sections[sectionheaders[k]]=text[sectionlineidx[k]+1:sectionlineidx[k+1]-1]
+        sections[sectionheaders[k]]=text[sectionlineidx[k]+1:sectionlineidx[k+1]]
     return sections, sectionheaders
 
 def parse_parameters(textlines):
@@ -64,7 +64,7 @@ def _parse(inputfile):
     gex={"header":sections["header"]}
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
-        print("header {} parsed".format(header))
+        # print("header {} parsed".format(header))
     return gex
 
 def parse(nameorfile, **kw):
