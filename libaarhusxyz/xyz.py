@@ -16,30 +16,76 @@ _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
 _RE_FLOAT = re.compile(r"^[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?$")
 _RE_INT = re.compile(r"^[-+]?[0-9]+$")
 
-# We match these types of column names:
+# We match these types of column names for layer data:
 #   rho_i[6]
 #   rho_i(6)
 #   rho_i_6
-# Note that we make sure not to match e.g. Misc05, as that interfers
-# with the naming convention used in Aaarhus Workbench / ALC files.
-_RE_LAYER_COL = re.compile(r"^(.*?)[(_\[]([0-9]+)[)\]]?$")
+# As of 2022-09-05, We also check for columns that have a numerical suffix but no separator like this:
+#   rho_i6
+# We treat these cases as "ambiguous", and they are treated differenly than the three other cases above. See more in the
+# function _transfer_per_location_cols_with_numerical_suffix.
+_RE_LAYER_COL_WITH_SEPARATOR = re.compile(r"^(.*?)[(_\[]([0-9]+)[)\]]?$")
+_RE_ALL_NUMBERED_COL = re.compile(r"^(.*?)[(_\[]?([0-9]+)[)\]]?$")
 
 _NA_VALUES = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
              "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
 
+def _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_cols, ambiguous_groups):
+    """
+    Search through the dictionary colgroups. If any list of columns has a length of only 1, parse this as a
+    per-sounding columns instead, and transfer columns to the list per_sounding_cols.
+
+    For the groups listed in "ambiguous_groups", we do an extra check because their numerical suffix is not separated
+    with an extra '[]', '()', or '_' (.e.g, 'rho_i6','Misc1', 'Current_Ch01', 'Current_Ch02'). These ones are transfered
+     to per_sounding_cols if they have:
+        a. a length of less than 3, or
+        b. end in "Ch", "CH", or "ch" (usually a column for data about a channel rather than data sampled in
+         depth or time)
+
+    @param colgroups: dicitonary of group_name (str) on keys and group columns (list) as values
+    @param per_sounding_cols: list of columns to parse as per-souding locations
+    @param ambiguous_groups: list of groups whose columns have a numerical suffix but no separator (e.g. "rho_i_std" for
+     columns ['rho_i_std1', 'rho_i_std2', ...])
+    @return: modified colgroups and per_sounding_cols
+    """
+    groups_to_delete = []
+    for group_name, group_cols in colgroups.items():
+        if len(group_cols) < 2:
+            per_sounding_cols += group_cols
+            groups_to_delete.append(group_name)
+        elif group_name in ambiguous_groups and (len(group_cols) < 3 or group_name[-2:] in ('CH','Ch','ch')):
+            per_sounding_cols += group_cols
+            groups_to_delete.append(group_name)
+
+    for group_name in groups_to_delete: colgroups.pop(group_name)
+    return colgroups, per_sounding_cols
 
 def _split_layer_columns(df):
-    per_layer_cols = [col for col in df.columns if re.match(_RE_LAYER_COL, col)]
-    per_sounding_cols = [col for col in df.columns if not col in per_layer_cols]
+    per_layer_cols = [col for col in df.columns if re.match(_RE_LAYER_COL_WITH_SEPARATOR, col)]
+
+    all_numbered_cols = [col for col in df.columns if re.match(_RE_ALL_NUMBERED_COL, col)]
+    ambiguous_cols = [col for col in all_numbered_cols if col not in per_layer_cols]
+
+    per_sounding_cols = [col for col in df.columns if (not col in per_layer_cols) and (not col in ambiguous_cols)]
 
     colgroups = {}
     for col in per_layer_cols:
-        group = re.match(_RE_LAYER_COL, col).groups()[0]
+        group = re.match(_RE_LAYER_COL_WITH_SEPARATOR, col).groups()[0]
         if group not in colgroups: colgroups[group] = []
         colgroups[group].append(col)
 
+    ambiguous_groups = []
+    for col in ambiguous_cols:
+        group = re.match(_RE_ALL_NUMBERED_COL, col).groups()[0]
+        if group not in colgroups:
+            colgroups[group] = []
+            ambiguous_groups.append(group)
+        colgroups[group].append(col)
+
+    colgroups, per_sounding_cols = _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_cols, ambiguous_groups)
+
     def columns_to_layers(columns):
-        layers = np.array([int(re.match(_RE_LAYER_COL, col).groups()[1]) for col in columns])
+        layers = np.array([int(re.match(_RE_ALL_NUMBERED_COL, col).groups()[1]) for col in columns])
         layers -= np.min(layers)
         return dict(zip(columns, layers))
         
