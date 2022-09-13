@@ -115,7 +115,7 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     res = {"flightlines": df,
             "layer_data": layer_dfs,
             "model_info": headers,
-            "file_meta": {"columns": full_df.columns}}
+            "file_meta": {"columns": list(full_df.columns)}}
 
     if alcdata is not None:
         res["alc_info"] = alcdata["meta"]
