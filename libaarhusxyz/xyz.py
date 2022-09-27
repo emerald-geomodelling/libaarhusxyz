@@ -177,7 +177,7 @@ def parse(nameorfile, **kw):
 
 def _un_split_layer_columns(data):
     data=data.copy()
-    flightlines= data[list(data.keys())[0]]
+    flightlines= data['flightlines']
     dic={}
     for key, value in data['layer_data'].items():
         dic[key] = value
