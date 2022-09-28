@@ -105,11 +105,16 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     for idx, line in enumerate(inputfile):
         if not line.startswith("/"):
             raise Exception("Unknown header line or end of header not recognized")
+
+        if re.match(r"^/ *((=+)|(-+)) *$", line):
+            # Lines line / ========================= are just dividers in some files
+            continue
+
         if name is None and line.startswith("/ "):
             col_names = [value.lower()
                          for value in line[1:].strip().split(' ')
                          if value != '']
-            break            
+            break
         
         line = line[1:].strip()
 
@@ -137,6 +142,17 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
         na_values + na_values + [headers["dummy"]]
     full_df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
 
+    separators = full_df.apply(lambda col: col.str.fullmatch(r"^/? *((=*)|(-*)) *$")).all(axis=1)
+    line_separators = full_df[full_df.columns[0]] == "Line"
+    full_df = full_df.loc[~separators & ~line_separators].copy()
+
+    cols = full_df.columns
+    for c in cols:
+        try:
+            full_df[c] = pd.to_numeric(full_df[c])
+        except:
+            pass
+    
     for key, value in headers.items():
         if " " in value and re.match(_RE_INTS, value):
             headers[key] = [int(item) for item in re.split(r"\s+", value)]
