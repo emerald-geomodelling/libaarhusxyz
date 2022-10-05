@@ -102,19 +102,26 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     name = None
     col_names = None
 
-    for idx, line in enumerate(inputfile):
+    while True:
+        pos = inputfile.tell()
+        line = inputfile.readline()
+        
+        if not line:
+            raise EOFError("End of file reached while still reading header lines")
+        
         if not line.startswith("/"):
-            raise Exception("Unknown header line or end of header not recognized")
+            inputfile.seek(pos)
+            break
 
-        if re.match(r"^/ *((=+)|(-+)) *$", line):
-            # Lines line / ========================= are just dividers in some files
+        if re.match(r"^/(([\s=]*)|([\s-]*))$", line):
+            # Lines line / ======== ======== ======== are just dividers in some files
             continue
 
-        if name is None and line.startswith("/ "):
+        if line.startswith("/ "):
+            # Always set this, so we use the last one
             col_names = [value.lower()
                          for value in line[1:].strip().split(' ')
                          if value != '']
-            break
         
         line = line[1:].strip()
 
@@ -142,9 +149,9 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
         na_values + na_values + [headers["dummy"]]
     full_df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
 
-    separators = full_df.apply(lambda col: col.str.fullmatch(r"^/? *((=*)|(-*)) *$")).all(axis=1)
-    line_separators = full_df[full_df.columns[0]] == "Line"
-    full_df = full_df.loc[~separators & ~line_separators].copy()
+    line_separators = (full_df[full_df.columns[0]] == "Line") | (full_df[full_df.columns[0]] == "Tie")
+    comments = full_df[full_df.columns[0]].str.match(r"^\s*/")
+    full_df = full_df.loc[~line_separators & ~comments].copy()
 
     cols = full_df.columns
     for c in cols:
