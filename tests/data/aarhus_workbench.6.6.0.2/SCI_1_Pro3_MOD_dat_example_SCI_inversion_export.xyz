@@ -1,0 +1,30 @@
+/INFO
+/Aarhus Workbench export file. File created: 07-10-2022 15:24:22. Exported from /Workbench64 . User: emeraldgeomodelling
+/WB VERSION
+/6.6.0.2
+/WORKSPACE NAME
+/G:\Test - 1\
+/NODE NAME(S)
+/SCI_1_Pro3
+/DUMMY
+/9999
+/DATA UNIT
+/dB/dt [V/Am^4]
+/DATA TYPE
+/DTSKYTEM2
+/COORDINATE SYSTEM
+/WGS 84 UTM zone 32N (epsg:32632)
+/NUMBER OF LAYERS
+/30
+/MODEL UNIT
+/Resistivity (Ohm-m) / conductivity (mS/m)
+/LENGTH UNIT
+/Meter
+/NUMBER OF GATES
+/41
+/GATE TIMES (s)
+/   2.910E-06   8.497E-06   1.526E-05   2.260E-05   4.111E-05   1.473E-05   6.058E-06   5.954E-05   6.298E-05   1.003E-04   3.676E-05   8.240E-05   7.725E-05   7.410E-05   5.264E-05   1.750E-04   1.809E-04   8.903E-05   8.294E-05   8.059E-05   3.359E-06   1.442E-04   1.137E-04   9.970E-05   3.011E-04   1.591E-04   2.599E-04   2.174E-04   4.230E-04   5.256E-04   6.118E-05   9.536E-04   9.113E-04   9.670E-04   7.179E-04   1.780E-03   1.136E-04   2.532E-04   1.408E-03   1.783E-03   4.489E-03
+/ LINE_NO         UTMX       UTMY         TIMESTAMP    FID  RECORD  ELEVATION        ALT     INVALT  INVALTSTD    DELTAALT  TILT  INVTILT  INVTILTSTD  NUMDATA  SEGMENT    RESDATA   RESTOTAL      DATA_1      DATA_2      DATA_3      DATA_4      DATA_5      DATA_6      DATA_7      DATA_8      DATA_9     DATA_10     DATA_11     DATA_12     DATA_13     DATA_14     DATA_15     DATA_16     DATA_17     DATA_18     DATA_19     DATA_20     DATA_21     DATA_22     DATA_23     DATA_24     DATA_25     DATA_26     DATA_27     DATA_28     DATA_29     DATA_30     DATA_31     DATA_32     DATA_33     DATA_34     DATA_35     DATA_36     DATA_37     DATA_38     DATA_39     DATA_40     DATA_41   DATASTD_1   DATASTD_2   DATASTD_3   DATASTD_4   DATASTD_5   DATASTD_6   DATASTD_7   DATASTD_8   DATASTD_9  DATASTD_10  DATASTD_11  DATASTD_12  DATASTD_13  DATASTD_14  DATASTD_15  DATASTD_16  DATASTD_17  DATASTD_18  DATASTD_19  DATASTD_20  DATASTD_21  DATASTD_22  DATASTD_23  DATASTD_24  DATASTD_25  DATASTD_26  DATASTD_27  DATASTD_28  DATASTD_29  DATASTD_30  DATASTD_31  DATASTD_32  DATASTD_33  DATASTD_34  DATASTD_35  DATASTD_36  DATASTD_37  DATASTD_38  DATASTD_39  DATASTD_40  DATASTD_41
+   100101  608872.1875    6676727  44456.4867013889      1       1      169.9  1.433E+01  2.066E+01  9.198E-02  -5.100E+00  9999     9999        9999       11        1  4.805E+00  9.402E-01  6.371E-08  3.871E-09  3.088E-08  9.919E-10  4.811E-09  2.417E-09  2.548E-09  2.849E-10  9.591E-10        9999        9999  3.118E-10        9999        9999  6.083E-11        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999  1.910E-02  4.170E-02  5.655E-02  9.863E-03  1.382E-02  4.645E-02  5.051E-02  5.302E-02  4.331E-03        9999        9999  4.549E-02        9999        9999  5.994E-02        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999
+   100101  608872.1875    6676727  44456.4867013889      1       1      169.9  2.551E+01  3.150E+01  6.229E-02  -5.100E+00  9999     9999        9999        6        2  3.452E+00  1.994E+00        9999        9999        9999        9999        9999        9999        9999        9999        9999  4.509E-11  9.640E-10        9999  1.179E-09  1.680E-10        9999  3.183E-10        9999  1.066E-10        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999  3.097E-02  4.030E-02        9999  1.904E-02  1.352E-02        9999  1.159E-02        9999  3.844E-02        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999
+   100101   608876.875    6676708  44456.4867129630      2       2      167.3  3.836E+01  6.046E-01  8.944E-02  -2.460E+00  9999     9999        9999       11        1  2.852E+00  4.091E-02  3.594E-08  4.274E-08  2.990E-08  3.309E-09  4.494E-09  6.094E-10  3.850E-09  1.760E-09  1.168E-09        9999        9999  4.782E-10        9999        9999  2.033E-10        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999  2.771E-02  4.017E-02  4.828E-02  1.995E-02  2.769E-02  3.438E-02  2.323E-02  1.710E-02  2.142E-02        9999        9999  5.958E-02        9999        9999  5.560E-02        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999        9999
