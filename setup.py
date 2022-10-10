@@ -17,4 +17,7 @@ setuptools.setup(
         "numpy",
         "pandas"
     ],
+    extras_require={
+        'tests': ['nose2', 'downfile'],
+    }
 )
