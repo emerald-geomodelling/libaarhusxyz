@@ -102,14 +102,26 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     name = None
     col_names = None
 
-    for idx, line in enumerate(inputfile):
+    while True:
+        pos = inputfile.tell()
+        line = inputfile.readline()
+        
+        if not line:
+            raise EOFError("End of file reached while still reading header lines")
+        
         if not line.startswith("/"):
-            raise Exception("Unknown header line or end of header not recognized")
-        if name is None and line.startswith("/ "):
+            inputfile.seek(pos)
+            break
+
+        if re.match(r"^/(([\s=]*)|([\s-]*))$", line):
+            # Lines line / ======== ======== ======== are just dividers in some files
+            continue
+
+        if line.startswith("/ "):
+            # Always set this, so we use the last one
             col_names = [value.lower()
                          for value in line[1:].strip().split(' ')
                          if value != '']
-            break            
         
         line = line[1:].strip()
 
@@ -137,6 +149,20 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
         na_values + na_values + [headers["dummy"]]
     full_df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
 
+    line_separators = (full_df[full_df.columns[0]] == "Line") | (full_df[full_df.columns[0]] == "Tie")
+    if full_df[full_df.columns[0]].dtype == "O":
+        comments = full_df[full_df.columns[0]].str.match(r"^\s*/")
+    else:
+        comments = full_df.index != full_df.index
+    full_df = full_df.loc[~line_separators & ~comments].reset_index(drop=True).copy()
+
+    cols = full_df.columns
+    for c in cols:
+        try:
+            full_df[c] = pd.to_numeric(full_df[c])
+        except:
+            pass
+    
     for key, value in headers.items():
         if " " in value and re.match(_RE_INTS, value):
             headers[key] = [int(item) for item in re.split(r"\s+", value)]
