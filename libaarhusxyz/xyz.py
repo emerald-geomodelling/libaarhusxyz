@@ -150,8 +150,11 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     full_df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
 
     line_separators = (full_df[full_df.columns[0]] == "Line") | (full_df[full_df.columns[0]] == "Tie")
-    comments = full_df[full_df.columns[0]].str.match(r"^\s*/")
-    full_df = full_df.loc[~line_separators & ~comments].copy()
+    if full_df[full_df.columns[0]].dtype == "O":
+        comments = full_df[full_df.columns[0]].str.match(r"^\s*/")
+    else:
+        comments = full_df.index != full_df.index
+    full_df = full_df.loc[~line_separators & ~comments].reset_index(drop=True).copy()
 
     cols = full_df.columns
     for c in cols:
