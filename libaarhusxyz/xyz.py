@@ -53,7 +53,7 @@ def _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_co
         if len(group_cols) < 2:
             per_sounding_cols += group_cols
             groups_to_delete.append(group_name)
-        elif group_name in ambiguous_groups and (len(group_cols) < 3 or group_name[-2:] in ('CH','Ch','ch')):
+        elif group_name in ambiguous_groups and (len(group_cols) < 3 or group_name[-2:].lower() == "ch"):
             per_sounding_cols += group_cols
             groups_to_delete.append(group_name)
 
@@ -119,7 +119,7 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
 
         if line.startswith("/ "):
             # Always set this, so we use the last one
-            col_names = [value.lower()
+            col_names = [value.lower().strip(",")
                          for value in line[1:].strip().split(' ')
                          if value != '']
         
@@ -147,7 +147,7 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     na_values = _NA_VALUES
     if "dummy" in headers:
         na_values + na_values + [headers["dummy"]]
-    full_df = pd.read_csv(inputfile, sep= '\s+', names = col_names, na_values=na_values, engine = 'python')
+    full_df = pd.read_csv(inputfile, names = col_names, na_values=na_values, engine = 'python')
 
     line_separators = (full_df[full_df.columns[0]] == "Line") | (full_df[full_df.columns[0]] == "Tie")
     if full_df[full_df.columns[0]].dtype == "O":
@@ -281,8 +281,9 @@ class XYZ(object):
         layer_dfs = self.model_dict["layer_data"]
         layer_constants = pd.DataFrame(index=next(iter(layer_dfs.values())).columns)
         for key, layer_df in layer_dfs.items():
-            if (layer_df.max() - layer_df.min()).max() == 0.0:
-                layer_constants[key] = layer_df.iloc[0]
+            if (layer_df.dtypes == float).all():
+                if (layer_df.max() - layer_df.min()).max() == 0.0:
+                    layer_constants[key] = layer_df.iloc[0]
         return layer_constants.reset_index().rename(columns={"index": "layer"})
 
     @property

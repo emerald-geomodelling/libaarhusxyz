@@ -3,6 +3,7 @@ import numpy as np
 import pyproj
 import re
 import projnames
+import datetime
 
 def project(innproj, utproj, xinn, yinn):
     innproj = int(innproj)
@@ -34,12 +35,21 @@ def normalize_column_names(model):
         linenocol:"title",
         "elevation":"topo",
         'doi_conservative':"doi_upper",
-        'doi_standard':"doi_lower"})
+        'doi_standard':"doi_lower",
+        'altitude_[m]': 'invalt',
+        'altitude_std_[fact]': 'invaltstd',
+        'altitude_a-priori_[m]': 'alt',
+        'altitude_a-priori_std_[fact]': 'altstd'        
+    })
 
+    if "sigma" in layer_dfs: layer_dfs["sigma_i"] = layer_dfs.pop("sigma")
     if "thk" in layer_dfs: layer_dfs["height"] = layer_dfs.pop("thk")
     if "rho_i" in layer_dfs: layer_dfs["resistivity"] = layer_dfs.pop("rho_i")
+    if "rho" in layer_dfs: layer_dfs["resistivity"] = layer_dfs.pop("rho")
     if "rho_i_std" in layer_dfs:
         layer_dfs["resistivity_variance_factor"] = layer_dfs.pop("rho_i_std")
+    if "rho_std" in layer_dfs:
+        layer_dfs["resistivity_variance_factor"] = layer_dfs.pop("rho_std")
 
     model.flightlines = df
 
@@ -107,10 +117,10 @@ def add_defaults(model, required_columns):
     df = model.flightlines
 
     if "doi_lower" not in df.columns:
-        df['doi_lower'] = np.full(len(df['fid']), 500, dtype=int)
+        df['doi_lower'] = np.full(len(df), 500, dtype=int)
 
     if "doi_upper" not in df.columns:
-        df['doi_upper'] = np.full(len(df['fid']), 300, dtype=int)
+        df['doi_upper'] = np.full(len(df), 300, dtype=int)
 
     for col in required_columns:
         if col not in df.columns:
@@ -164,7 +174,17 @@ def calculate_doi_layer(model):
                      2,
                      np.where(layer_dfs["dep_bot"] > doi_upper,
                               1, 0)), columns=layer_dfs["dep_bot"].columns)
-        
+
+
+def normalize_dates(model):
+    if "date" in model.flightlines.columns and "time" in model.flightlines.columns:
+        model.flightlines = model.flightlines.assign(
+            timestamp = (pd.to_datetime(model.flightlines.date + " " + model.flightlines.time)
+                         - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
+            
+        ).drop(
+            columns = ["date", "time"])
+
 def normalize(model, project_crs=None, required_columns = ['resdata',"restotal", "numdata"]):
     """This function
          * Normalizes naming and format to our internal format
@@ -178,10 +198,13 @@ def normalize(model, project_crs=None, required_columns = ['resdata',"restotal",
     normalize_column_names(model)
     normalize_projection(model)
     normalize_coordinates(model, project_crs)
-
+    normalize_dates(model)
+    
     calculate_xdist(model)
     add_defaults(model, required_columns)
     normalize_depths(model)
     calculate_z(model)
     calculate_height(model)
     calculate_doi_layer(model)
+    
+    return model
