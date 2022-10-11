@@ -18,6 +18,7 @@ setuptools.setup(
         "pandas"
     ],
     extras_require={
+        'normalisation': ["pryproj", "projnames"],
         'tests': ['nose2', 'downfile'],
     }
 )
