@@ -123,9 +123,7 @@ class TestAarhusWorkbench6602(unittest.TestCase):
             self.fail(str(diff))
 
 class TestAarhusWorkbench6700(unittest.TestCase):
-    def test_raw(self):
-        wb6 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "RAW_export_example_averagde_data_export.xyz"))
-        wb7 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "RAW_export_example_raw_data_export.xyz"))
+    def compare_versions(self, wb6, wb7):
         libaarhusxyz.normalizer.normalize(wb6)
         libaarhusxyz.normalizer.normalize(wb7)
 
@@ -151,3 +149,28 @@ class TestAarhusWorkbench6700(unittest.TestCase):
 
         self.assertEqual(wb6_ld - wb7_ld, set())
         self.assertEqual(wb7_ld - wb6_ld, set())
+    
+    def test_raw(self):
+        wb6 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "RAW_export_example_averagde_data_export.xyz"))
+        wb7 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "RAW_export_example_raw_data_export.xyz"))
+        self.compare_versions(wb6, wb7)
+        
+    def test_avg(self):
+        wb6 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "AVG_export_example_averagde_data_export.xyz"))
+        wb7 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "AVG_export_example_averagde_data_export.xyz"))
+        self.compare_versions(wb6, wb7)
+
+    def test_sci_dat(self):
+        wb6 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.xyz"))
+        wb7 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.xyz"))
+        self.compare_versions(wb6, wb7)
+
+    def test_sci_inv(self):
+        wb6 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.xyz"))
+        wb7 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.xyz"))
+        self.compare_versions(wb6, wb7)
+
+    def test_sci_syn(self):
+        wb6 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz"))
+        wb7 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz"))
+        self.compare_versions(wb6, wb7)
