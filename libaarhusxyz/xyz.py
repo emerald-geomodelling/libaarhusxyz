@@ -147,7 +147,7 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     na_values = _NA_VALUES
     if "dummy" in headers:
         na_values + na_values + [headers["dummy"]]
-    full_df = pd.read_csv(inputfile, names = col_names, na_values=na_values, engine = 'python')
+    full_df = pd.read_csv(inputfile, sep = ",?[\s]+", names = col_names, na_values=na_values, engine = 'python')
 
     line_separators = (full_df[full_df.columns[0]] == "Line") | (full_df[full_df.columns[0]] == "Tie")
     if full_df[full_df.columns[0]].dtype == "O":
@@ -334,12 +334,12 @@ class XYZ(object):
                 return colname
     @property
     def x_column(self):
-        for colname in ("x", "utmx"):
+        for colname in ("x", "utmx", "lon", "lng"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def y_column(self):
-        for colname in ("y", "utmy"):
+        for colname in ("y", "utmy", "lat"):
             if colname in self.flightlines.columns:
                 return colname
             
