@@ -4,10 +4,12 @@ import libaarhusxyz.normalizer
 import downfile
 import os.path
 import pandas as pd
+import numpy as np
 
 test_basedir = os.path.dirname(__file__)
 test_datadir_wb_6 = os.path.join(test_basedir, "data/aarhus_workbench.6.6.0.2")
 test_datadir_wb_7 = os.path.join(test_basedir, "data/aarhus_workbench.6.7.0.0")
+test_datadir_skytem = os.path.join(test_basedir, "data/skytem")
 
 class Difference(object):
     def __init__(self, path, diff, a, b):
@@ -67,12 +69,12 @@ def compare(a, b, path= []):
                 b.loc[b.index.isin(a.index), [col]].rename(
                 columns={col: "b"}
             ))
-            merged = merged.loc[merged.a != merged.b]
+            merged = merged.loc[(merged.a != merged.b) & ~(pd.isnull(merged.a) & pd.isnull(merged.b))]
             
             for diff in compare(merged.a, merged.b, path + [col]):
                 yield diff
     else:
-        if a != b:
+        if a != b and not (pd.isnull(a) and pd.isnull(b)):
             yield Difference(path, "!=", a, b)    
 
 
@@ -174,3 +176,14 @@ class TestAarhusWorkbench6700(unittest.TestCase):
         wb6 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz"))
         wb7 = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz"))
         self.compare_versions(wb6, wb7)
+
+class TestSkytem(unittest.TestCase):
+    def test_202202(self):
+        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_skytem, "2022.02.test.xyz"),
+                                  alcfile=os.path.join(test_datadir_skytem, "2022.02.test.alc")).model_dict
+        fixture = downfile.parse(os.path.join(test_datadir_skytem, "2022.02.test.down"))
+        del parsed["model_info"]["source"]
+        del fixture["model_info"]["source"]
+
+        for diff in compare(parsed, fixture):
+            self.fail(str(diff))
