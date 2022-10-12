@@ -39,7 +39,8 @@ def normalize_column_names(model):
         'altitude_[m]': 'invalt',
         'altitude_std_[fact]': 'invaltstd',
         'altitude_a-priori_[m]': 'alt',
-        'altitude_a-priori_std_[fact]': 'altstd'        
+        'altitude_a-priori_std_[fact]': 'altstd',
+        'segments': 'segment'
     })
 
     if "sigma" in layer_dfs: layer_dfs["sigma_i"] = layer_dfs.pop("sigma")
@@ -178,10 +179,12 @@ def calculate_doi_layer(model):
 
 def normalize_dates(model):
     if "date" in model.flightlines.columns and "time" in model.flightlines.columns:
+        datestr = model.flightlines.date.fillna("").astype(str)
+        timestr = model.flightlines.time.fillna("").astype(str)
+        datetimestr = np.where(datestr != "", datestr + " " + timestr, "")
+        
         model.flightlines = model.flightlines.assign(
-            timestamp = (pd.to_datetime(model.flightlines.date + " " + model.flightlines.time)
-                         - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
-            
+            timestamp = pd.Series(pd.to_datetime(datetimestr) - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
         ).drop(
             columns = ["date", "time"])
 
