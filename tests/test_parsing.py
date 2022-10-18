@@ -288,6 +288,51 @@ class TestAarhusWorkbench6011(TestAarhusWorkbenchVersion):
             self.metadata_syn)
 
 
+class TestAarhusWorkbench6100(TestAarhusWorkbenchVersion):
+    metadata_avg = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_avg)
+    metadata_avg["model_info"] = metadata_avg["model_info"] - {'gate times for channel 2', 'number of gates for channel 2'}
+    metadata_avg["layer_data"] = metadata_avg["layer_data"] - {'dbdt_inuse_ch2gt', 'dbdt_inuse_ch1gt', 'dbdt_std_ch2gt', 'dbdt_ch2gt'}
+
+    metadata_dat = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_dat)
+    metadata_dat["model_info"] = metadata_dat["model_info"] - {'model unit', 'length unit'}
+    metadata_dat["flightlines"] = metadata_dat["flightlines"] - {'timestamp', 'fid'}
+    metadata_dat["layer_data"] = metadata_dat["layer_data"] - {'data', 'datastd'}
+    
+    metadata_inv = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_inv)
+    metadata_inv["model_info"] = metadata_inv["model_info"] - {'model unit', 'length unit'}
+    metadata_inv["flightlines"] = metadata_inv["flightlines"] - {'timestamp', 'fid', 'invshift', 'shift', 'invshiftstd'}
+    
+    metadata_syn = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_syn)
+    metadata_syn["model_info"] = metadata_syn["model_info"] - {'model unit', 'length unit'}
+    metadata_syn["flightlines"] = metadata_syn["flightlines"] - {'timestamp', 'fid'}
+    metadata_syn["layer_data"] = metadata_syn["layer_data"] - {'data'}
+
+    def test_avg(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6100, "pronode_AVG_export.xyz"), normalize=True)),
+            self.metadata_avg)
+            
+    def test_sci_dat(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6100, "MOD_dat.xyz"), normalize=True)),
+            self.metadata_dat)
+
+    def test_sci_inv(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6100, "MOD_inv.xyz"), normalize=True)),
+            self.metadata_inv)
+
+    def test_sci_syn(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6100, "MOD_syn.xyz"), normalize=True)),
+            self.metadata_syn)
+
+        
+
 class TestAarhusWorkbench6700(TestAarhusWorkbenchVersion):
     metadata_dat = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_dat)
     metadata_dat["flightlines"] = metadata_dat["flightlines"] - {'invtilt', 'deltaalt', 'invtiltstd', 'fid', 'tilt'}
