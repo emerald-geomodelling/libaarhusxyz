@@ -2,6 +2,7 @@
 
 import pandas as pd
 import numpy as np
+import copy
 import re
 try:
     import projnames
@@ -227,7 +228,8 @@ def _dump(data, file, alcfile=None):
     if alcfile is not None:
         alc.dump(data, alcfile, columns=df.columns)
 
-def dump(data, nameorfile, **kw):
+def dump(data_in, nameorfile, **kw):
+    data = copy.deepcopy(data_in)
     if isinstance(nameorfile, str):
         with open(nameorfile, 'w') as f:
             return _dump(data, f, **kw)
