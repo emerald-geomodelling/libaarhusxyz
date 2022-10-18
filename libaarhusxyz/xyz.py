@@ -10,7 +10,6 @@ except:
     projnames = None
 from . import transforms
 from . import alc
-from . import normalizer
 
 _RE_FLOATS = re.compile(r"^ *([-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)(\s+[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)*$")
 _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
@@ -250,6 +249,7 @@ class XYZ(object):
             else:
                 self.model_dict = parse(*arg, **kw)
         if normalize:
+            from . import normalizer
             normalizer.normalize(self)
         return self
 
@@ -266,6 +266,13 @@ class XYZ(object):
     @model_info.setter
     def model_info(self, value):
         self.model_dict["model_info"] = value
+        
+    @property
+    def file_meta(self):
+        return self.model_dict["file_meta"]
+    @file_meta.setter
+    def file_meta(self, value):
+        self.model_dict["file_meta"] = value
         
     @property
     def flightlines(self):
