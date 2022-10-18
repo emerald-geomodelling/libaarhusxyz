@@ -52,6 +52,9 @@ def normalize_column_names(model):
     if "rho_std" in layer_dfs:
         layer_dfs["resistivity_variance_factor"] = layer_dfs.pop("rho_std")
 
+    if 'gate times' in headers:
+        headers['gate times (s)'] = headers.pop('gate times')
+        
     model.flightlines = df
 
 def normalize_projection(model):
