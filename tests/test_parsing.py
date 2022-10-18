@@ -332,6 +332,18 @@ class TestAarhusWorkbench6100(TestAarhusWorkbenchVersion):
             self.metadata_syn)
 
         
+class TestAarhusWorkbench6210(TestAarhusWorkbenchVersion):
+    metadata_avg = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_avg)
+    metadata_avg["model_info"] = metadata_avg["model_info"] - {'gate times for channel 2', 'number of gates for channel 2'}
+    metadata_avg["layer_data"] = metadata_avg["layer_data"] - {'dbdt_inuse_ch2gt', 'dbdt_inuse_ch1gt', 'dbdt_std_ch2gt', 'dbdt_ch2gt'}
+
+    def test_avg(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6210, "AVG_export.xyz"), normalize=True)),
+            self.metadata_avg)
+
+        
 
 class TestAarhusWorkbench6700(TestAarhusWorkbenchVersion):
     metadata_dat = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_dat)
