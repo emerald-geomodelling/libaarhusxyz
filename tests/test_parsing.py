@@ -8,10 +8,15 @@ import numpy as np
 import copy
 
 test_basedir = os.path.dirname(__file__)
-test_datadir_wb_6 = os.path.join(test_basedir, "data/aarhus_workbench.6.6.0.2")
-test_datadir_wb_7 = os.path.join(test_basedir, "data/aarhus_workbench.6.7.0.0")
+test_datadir_wb_5940 = os.path.join(test_basedir, "data/aarhus_workbench.5.9.4.0")
+
+test_datadir_wb_6011 = os.path.join(test_basedir, "data/aarhus_workbench.6.0.1.1")
+test_datadir_wb_6100 = os.path.join(test_basedir, "data/aarhus_workbench.6.1.0.0")
+test_datadir_wb_6210 = os.path.join(test_basedir, "data/aarhus_workbench.6.2.1.0")
+
+test_datadir_wb_6602 = os.path.join(test_basedir, "data/aarhus_workbench.6.6.0.2")
+test_datadir_wb_6700 = os.path.join(test_basedir, "data/aarhus_workbench.6.7.0.0")
 test_datadir_skytem = os.path.join(test_basedir, "data/skytem")
-test_datadir_wb_59 = os.path.join(test_basedir, "data/aarhus_workbench.5.9.4.0")
 
 class Difference(object):
     def __init__(self, path, diff, a, b):
@@ -99,8 +104,8 @@ class TestSkytem(unittest.TestCase):
 
 class TestAarhusWorkbench6602(unittest.TestCase):
     def test_raw(self):
-        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "RAW_export_example_averagde_data_export.xyz")).model_dict
-        fixture = downfile.parse(os.path.join(test_datadir_wb_6, "RAW_export_example_averagde_data_export.down"))
+        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6602, "RAW_export_example_averagde_data_export.xyz")).model_dict
+        fixture = downfile.parse(os.path.join(test_datadir_wb_6602, "RAW_export_example_averagde_data_export.down"))
         del parsed["model_info"]["source"]
         del fixture["model_info"]["source"]
 
@@ -108,8 +113,8 @@ class TestAarhusWorkbench6602(unittest.TestCase):
             self.fail(str(diff))
 
     def test_avg(self):
-        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "AVG_export_example_averagde_data_export.xyz")).model_dict
-        fixture = downfile.parse(os.path.join(test_datadir_wb_6, "AVG_export_example_averagde_data_export.down"))
+        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6602, "AVG_export_example_averagde_data_export.xyz")).model_dict
+        fixture = downfile.parse(os.path.join(test_datadir_wb_6602, "AVG_export_example_averagde_data_export.down"))
         del parsed["model_info"]["source"]
         del fixture["model_info"]["source"]
 
@@ -117,8 +122,8 @@ class TestAarhusWorkbench6602(unittest.TestCase):
             self.fail(str(diff))
 
     def test_sci_dat(self):
-        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.xyz")).model_dict
-        fixture = downfile.parse(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.down"))
+        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6602, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.xyz")).model_dict
+        fixture = downfile.parse(os.path.join(test_datadir_wb_6602, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.down"))
         del parsed["model_info"]["source"]
         del fixture["model_info"]["source"]
 
@@ -126,8 +131,8 @@ class TestAarhusWorkbench6602(unittest.TestCase):
             self.fail(str(diff))
 
     def test_sci_inv(self):
-        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.xyz")).model_dict
-        fixture = downfile.parse(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.down"))
+        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6602, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.xyz")).model_dict
+        fixture = downfile.parse(os.path.join(test_datadir_wb_6602, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.down"))
         del parsed["model_info"]["source"]
         del fixture["model_info"]["source"]
 
@@ -135,8 +140,8 @@ class TestAarhusWorkbench6602(unittest.TestCase):
             self.fail(str(diff))
 
     def test_sci_syn(self):
-        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz")).model_dict
-        fixture = downfile.parse(os.path.join(test_datadir_wb_6, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.down"))
+        parsed = libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6602, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz")).model_dict
+        fixture = downfile.parse(os.path.join(test_datadir_wb_6602, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.down"))
         del parsed["model_info"]["source"]
         del fixture["model_info"]["source"]
 
@@ -205,45 +210,6 @@ class TestAarhusWorkbenchVersion(unittest.TestCase):
         self.assertEqual(wb6_ld - wbtest_ld, set())
         self.assertEqual(wbtest_ld - wb6_ld, set())
 
-class TestAarhusWorkbench6700(TestAarhusWorkbenchVersion):
-    metadata_dat = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_dat)
-    metadata_dat["flightlines"] = metadata_dat["flightlines"] - {'invtilt', 'deltaalt', 'invtiltstd', 'fid', 'tilt'}
-
-    metadata_inv = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_inv)
-    metadata_inv["flightlines"] = metadata_inv["flightlines"] - {'tilt', 'invshiftstd', 'shift', 'invshift', 'fid', 'invtilt', 'deltaalt', 'invtiltstd'}
-    
-    metadata_syn = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_syn)
-    metadata_syn["flightlines"] = metadata_syn["flightlines"] - {'tilt', 'fid', 'invtilt', 'deltaalt', 'invtiltstd'}
-    
-    def test_raw(self):
-        self.assertDeepEqual(
-            self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "RAW_export_example_raw_data_export.xyz"), normalize=True)),
-            self.metadata_raw)
-        
-    def test_avg(self):
-        self.assertDeepEqual(
-            self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "AVG_export_example_averagde_data_export.xyz"), normalize=True)),
-            self.metadata_avg)
-
-    def test_sci_dat(self):
-        self.assertDeepSupersetOf(
-            self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.xyz"), normalize=True)),
-            self.metadata_dat)
-
-    def test_sci_inv(self):
-        self.assertDeepSupersetOf(
-            self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.xyz"), normalize=True)),
-            self.metadata_inv)
-
-    def test_sci_syn(self):
-        self.assertDeepSupersetOf(
-            self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_7, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz"), normalize=True)),
-            self.metadata_syn)        
 
 class TestAarhusWorkbench5940(TestAarhusWorkbenchVersion):
     metadata_avg = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_avg)
@@ -266,25 +232,100 @@ class TestAarhusWorkbench5940(TestAarhusWorkbenchVersion):
     def test_avg(self):
         self.assertDeepSupersetOf(
             self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_59, "pro_AVG_export.xyz"), normalize=True)),
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_5940, "pro_AVG_export.xyz"), normalize=True)),
             self.metadata_avg)
             
     def test_sci_dat(self):
         self.assertDeepSupersetOf(
             self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_59, "pro_MOD_dat.xyz"), normalize=True)),
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_5940, "pro_MOD_dat.xyz"), normalize=True)),
             self.metadata_dat)
 
     def test_sci_inv(self):
         self.assertDeepSupersetOf(
             self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_59, "pro_MOD_inv.xyz"), normalize=True)),
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_5940, "pro_MOD_inv.xyz"), normalize=True)),
             self.metadata_inv)
 
     def test_sci_syn(self):
         self.assertDeepSupersetOf(
             self.extract_metadata(
-                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_59, "pro_MOD_syn.xyz"), normalize=True)),
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_5940, "pro_MOD_syn.xyz"), normalize=True)),
             self.metadata_syn)
+
+
+class TestAarhusWorkbench6011(TestAarhusWorkbenchVersion):
+    metadata_dat = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_dat)
+    metadata_dat["model_info"] = metadata_dat["model_info"] - {'model unit', 'length unit'}
+    metadata_dat["flightlines"] = metadata_dat["flightlines"] - {'timestamp', 'fid'}
+    metadata_dat["layer_data"] = metadata_dat["layer_data"] - {'data', 'datastd'}
+    
+    metadata_inv = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_inv)
+    metadata_inv["model_info"] = metadata_inv["model_info"] - {'model unit', 'length unit'}
+    metadata_inv["flightlines"] = metadata_inv["flightlines"] - {'timestamp', 'fid', 'invshift', 'shift', 'invshiftstd'}
+    
+    metadata_syn = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_syn)
+    metadata_syn["model_info"] = metadata_syn["model_info"] - {'model unit', 'length unit'}
+    metadata_syn["flightlines"] = metadata_syn["flightlines"] - {'timestamp', 'fid'}
+    metadata_syn["layer_data"] = metadata_syn["layer_data"] - {'data'}
+
+    def test_sci_dat(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6011, "MOD_dat.xyz"), normalize=True)),
+            self.metadata_dat)
+
+    def test_sci_inv(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6011, "MOD_inv.xyz"), normalize=True)),
+            self.metadata_inv)
+
+    def test_sci_syn(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6011, "MOD_syn.xyz"), normalize=True)),
+            self.metadata_syn)
+
+
+class TestAarhusWorkbench6700(TestAarhusWorkbenchVersion):
+    metadata_dat = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_dat)
+    metadata_dat["flightlines"] = metadata_dat["flightlines"] - {'invtilt', 'deltaalt', 'invtiltstd', 'fid', 'tilt'}
+
+    metadata_inv = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_inv)
+    metadata_inv["flightlines"] = metadata_inv["flightlines"] - {'tilt', 'invshiftstd', 'shift', 'invshift', 'fid', 'invtilt', 'deltaalt', 'invtiltstd'}
+    
+    metadata_syn = copy.deepcopy(TestAarhusWorkbenchVersion.metadata_syn)
+    metadata_syn["flightlines"] = metadata_syn["flightlines"] - {'tilt', 'fid', 'invtilt', 'deltaalt', 'invtiltstd'}
+    
+    def test_raw(self):
+        self.assertDeepEqual(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6700, "RAW_export_example_raw_data_export.xyz"), normalize=True)),
+            self.metadata_raw)
+        
+    def test_avg(self):
+        self.assertDeepEqual(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6700, "AVG_export_example_averagde_data_export.xyz"), normalize=True)),
+            self.metadata_avg)
+
+    def test_sci_dat(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6700, "SCI_1_Pro3_MOD_dat_example_SCI_inversion_export.xyz"), normalize=True)),
+            self.metadata_dat)
+
+    def test_sci_inv(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6700, "SCI_1_Pro3_MOD_inv_example_SCI_inversion_export.xyz"), normalize=True)),
+            self.metadata_inv)
+
+    def test_sci_syn(self):
+        self.assertDeepSupersetOf(
+            self.extract_metadata(
+                libaarhusxyz.XYZ(os.path.join(test_datadir_wb_6700, "SCI_1_Pro3_MOD_syn_example_SCI_inversion_export.xyz"), normalize=True)),
+            self.metadata_syn)        
 
 
