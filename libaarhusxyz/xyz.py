@@ -9,7 +9,7 @@ except:
     projnames = None
 from . import transforms
 from . import alc
-
+from . import normalizer
 
 _RE_FLOATS = re.compile(r"^ *([-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)(\s+[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)*$")
 _RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
@@ -191,7 +191,7 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
 
     if alcdata is not None:
         res["alc_info"] = alcdata["meta"]
-    
+        
     return res
     
 def parse(nameorfile, **kw):
@@ -240,12 +240,15 @@ _dump_function = dump
 
 class XYZ(object):
     def __new__(cls, *arg, **kw):
+        normalize = kw.pop("normalize", False)
         self = object.__new__(cls)
         if arg or kw:
             if arg and isinstance(arg[0], dict):
                 self.model_dict = arg[0]
             else:
                 self.model_dict = parse(*arg, **kw)
+        if normalize:
+            normalizer.normalize(self)
         return self
 
     def dump(self, *arg, **kw):
