@@ -44,7 +44,7 @@ def _dump(xyz, f, columns=None):
                     if row["canonical_name"].startswith("Gate_Ch")])
 
     header = [{"canonical_name": "Version", "position": 2},
-              {"canonical_name": "System", "position": xyz.get("alc_info", {}).get("System", "Unknown")},
+              {"canonical_name": "System", "position": xyz.get("alc_info", {}).get("System", "SkyTEM XYZ")},
               {"canonical_name": "Dummy", "position": "*"},
               {"canonical_name": "ChannelsNumber", "position": len(channels)},
     ]

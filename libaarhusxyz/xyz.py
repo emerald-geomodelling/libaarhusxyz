@@ -212,7 +212,7 @@ def _un_split_layer_columns(data):
     dic={}
     for key, value in data['layer_data'].items():
         dic[key] = value
-        dic[key].columns= [key + '[' + str(col) + ']' for col in dic[key].columns]
+        dic[key].columns= [key + '_' + "{:02d}".format(col+1) for col in dic[key].columns]
     merge_layers = pd.concat(dic.values(), axis=1)
     merge_dfs= pd.concat((flightlines, merge_layers), axis=1)
     return merge_dfs
