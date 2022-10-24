@@ -159,4 +159,4 @@ def dump(data, nameorfile, **kw):
         with open(nameorfile, 'w') as f:
             return _dump(data, f, **kw)
     else:
-        return _dump(data, f, **kw)
+        return _dump(data, nameorfile, **kw)

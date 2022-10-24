@@ -70,13 +70,17 @@ def _split_layer_columns(df):
 
     colgroups = {}
     for col in per_layer_cols:
-        group = re.match(_RE_LAYER_COL_WITH_SEPARATOR, col).groups()[0]
+        match = re.match(_RE_LAYER_COL_WITH_SEPARATOR, col)
+        if not match: continue
+        group = match.groups()[0]
         if group not in colgroups: colgroups[group] = []
         colgroups[group].append(col)
 
     ambiguous_groups = []
     for col in ambiguous_cols:
-        group = re.match(_RE_ALL_NUMBERED_COL, col).groups()[0]
+        match = re.match(_RE_ALL_NUMBERED_COL, col)
+        if not match: continue
+        group = match.groups()[0]
         if group not in colgroups:
             colgroups[group] = []
             ambiguous_groups.append(group)
@@ -85,7 +89,8 @@ def _split_layer_columns(df):
     colgroups, per_sounding_cols = _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_cols, ambiguous_groups)
 
     def columns_to_layers(columns):
-        layers = np.array([int(re.match(_RE_ALL_NUMBERED_COL, col).groups()[1]) for col in columns])
+        matches = [re.match(_RE_ALL_NUMBERED_COL, col) for col in columns]
+        layers = np.array([int(match.groups()[1]) if match else -1 for match in matches])
         layers -= np.min(layers)
         return dict(zip(columns, layers))
         
@@ -233,7 +238,7 @@ def dump(data_in, nameorfile, **kw):
         with open(nameorfile, 'w') as f:
             return _dump(data, f, **kw)
     else:
-        return _dump(data, f, **kw)
+        return _dump(data, nameorfile, **kw)
 
 
 
