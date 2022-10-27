@@ -1,16 +1,19 @@
 import pandas as pd
 import re
+import pdb
+
 
 def parse(nameorfile, xyz_columns=None):
     df = pd.read_csv(nameorfile, sep="= *", header=None).rename(columns={0:"canonical_name", 1:"position"})
     filt = df.canonical_name.isin(["Version", "System", "ChannelsNumber", "Dummy"])
     meta = df.loc[filt].set_index("canonical_name")["position"].to_dict()
-    mapping = df.loc[~filt].astype({"position": int})
+    mapping = df.loc[~filt].astype({"position": int}).reset_index(drop=True)
 
     if xyz_columns is not None:
         filt = mapping.position >= 0
         mapping["column"] = None
-        mapping.loc[filt, "column"] = xyz_columns[mapping.loc[filt, "position"] - 1]
+        filt2=mapping.index[filt]
+        mapping.loc[filt2, "column"] = xyz_columns[mapping.loc[filt2, "position"] - 1].values
     
     return {"meta": meta,
             "mapping": mapping}
