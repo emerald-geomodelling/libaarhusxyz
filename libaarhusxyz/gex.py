@@ -91,6 +91,7 @@ def _dump(gex, f, columns=None):
             if 'General' in key1:
                 lines.append('\n')
             a=gex[key1][key2]
+            # the follwoing is a mess because the required format is depending on the paramter 
             if type(a) is np.ndarray:
                 if type(a[0]) is np.str_:
                     lines.append('{0}={1}'.format(key2, ' '.join(['{}'.format(item) for item in a[:] ]))) 
@@ -112,10 +113,14 @@ def _dump(gex, f, columns=None):
                         else:
                             lines.append(('{0}{1:0'+str(digits)+'d}=\t{2}').format(key2, n+1, '\t'.join(['{}'.format(item) for item in row ])) )
             elif type(a) is float:
-                if key2 in ['GateNoForPowerLineMonitor', 'RemoveInitialGates', 'NumberOfTurnsLM', 'NumberOfTurnsHM','LoopType' , 'RxCoilNumber', 'NoGates' ]:
+                if key2 in ['GateNoForPowerLineMonitor', 'RemoveInitialGates', 'NumberOfTurnsLM', 
+                            'NumberOfTurnsHM','LoopType' , 'RxCoilNumber', 'NoGates', 'RemoveInitialGates',
+                            'SystemResponseConvolution']:
                     lines.append('{0}={1}'.format(key2, int(a)))
                 else:
                     lines.append('{0}={1}'.format(key2, a))
+            elif type(a) is int:
+                lines.append('{0}={1}'.format(key2, int(a)))
             elif type(a) is str:
                 lines.append('{0}={1}'.format(key2, a))
     
