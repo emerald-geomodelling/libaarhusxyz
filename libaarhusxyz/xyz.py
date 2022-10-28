@@ -382,7 +382,10 @@ class XYZ(object):
             for col in dep_top.columns:
                 dep_top[col] = self.flightlines["elevation"].loc[filt] - dep_top[col]
                 dep_bot[col] = self.flightlines["elevation"].loc[filt] - dep_bot[col]
-
+        else:
+            dep_top = -dep_top
+            dep_bot = -dep_bot
+                
         xcoords = np.concatenate((flightlines.xdist, flightlines.xdist[-1:]+1))
         zcoords = np.concatenate((dep_top.values, dep_bot.values[:,-1:]), axis=1)
         zcoords = np.concatenate((zcoords, zcoords[-1:,:]))
