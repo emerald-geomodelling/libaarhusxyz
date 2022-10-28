@@ -253,6 +253,10 @@ class XYZ(object):
                 self.model_dict = arg[0]
             else:
                 self.model_dict = parse(*arg, **kw)
+        else:
+            self.model_dict = {"flightlines": pd.DataFrame(columns=["line_no", "x", "y"]),
+                               "model_info": {},
+                               "layer_data": {}}
         if normalize:
             from . import normalizer
             normalizer.normalize(self)
@@ -296,6 +300,8 @@ class XYZ(object):
     @property
     def layer_params(self):
         layer_dfs = self.model_dict["layer_data"]
+        if not len(layer_dfs):
+            return pd.DataFrame({"layer": []})
         layer_constants = pd.DataFrame(index=next(iter(layer_dfs.values())).columns)
         for key, layer_df in layer_dfs.items():
             if (layer_df.dtypes == float).all():
@@ -312,7 +318,11 @@ class XYZ(object):
         if "coordinate system" not in self.model_info:
             return None
         return projnames.search(self.model_info["coordinate system"])
-                
+
+    @projection.setter
+    def projection(self, value):
+        self.model_info['projection'] = value
+        
     def to_dict(self):
         return self.model_dict
         
@@ -359,7 +369,47 @@ class XYZ(object):
         for colname in ("y", "utmy", "lat"):
             if colname in self.flightlines.columns:
                 return colname
-            
+
+    def plot_line(self, line_no, ax=None):
+        if ax is None: ax = plt.gca()
+        filt = self.flightlines.line_no == line_no
+        flightlines = self.flightlines.loc[filt]
+        resistivity = self.resistivity.loc[filt]
+        dep_top = self.layer_data["dep_top"].loc[filt].copy()
+        dep_bot = self.layer_data["dep_bot"].loc[filt].copy()
+
+        if "elevation" in self.flightlines.columns:
+            for col in dep_top.columns:
+                dep_top[col] = self.flightlines["elevation"].loc[filt] - dep_top[col]
+                dep_bot[col] = self.flightlines["elevation"].loc[filt] - dep_bot[col]
+
+        xcoords = np.concatenate((flightlines.xdist, flightlines.xdist[-1:]+1))
+        zcoords = np.concatenate((dep_top.values, dep_bot.values[:,-1:]), axis=1)
+        zcoords = np.concatenate((zcoords, zcoords[-1:,:]))
+
+        data = np.log10(resistivity.values)
+        zcoords = zcoords[:,::-1].T
+        data = data[:,::-1].T
+
+        ax.pcolor(xcoords, zcoords, data, cmap="turbo", shading='flat')
+
+    def plot(self, fig = None):
+        if fig is None:
+            import matplotlib.pyplot as plt
+            fig = plt.figure()
+        
+        lines = self.flightlines.line_no.unique()
+        w = int(np.ceil(np.sqrt(len(lines))))
+        h = int(np.ceil(len(lines) / w))
+
+        axs = fig.subplots(h, w)
+        if len(lines) > 1:
+            axs = axs.flatten()
+        else:
+            axs = [axs]
+        for line_no, ax in zip(lines, axs):
+            self.plot_line(line_no, ax)
+        
     def __repr__(self):
         max_depth = None
         if "dep_bot" in self.layer_data:
@@ -379,7 +429,7 @@ class XYZ(object):
             "Flightlines: %s" % (len(self.flightlines[self.line_id_column].unique()),) if self.line_id_column in self.flightlines.columns else "No line_id column to distinguish lines.",
             "Maximum layer depth: %s" % (max_depth,),
             "Projection: %s" % self.projection,
-            repr(self.flightlines[[self.x_column, self.y_column]].describe().loc[["min", "max"]]),
+            repr(self.flightlines[[self.x_column, self.y_column]].describe().loc[["min", "max"]]) if len(self.flightlines) else "",
             resistivity,
             "",
             "Layer data: %s" % (", ".join(set(self.layer_data.keys()) - set(self.layer_params.keys())),),
