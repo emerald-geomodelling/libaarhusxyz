@@ -65,6 +65,10 @@ def _parse(inputfile):
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
         print("header {} parsed".format(header))
+    
+    for channel in ["Channel1", "Channel2"]:
+        if channel in gex.keys():
+            gex[channel]['ApproxDipoleMoment']= gex["General"]["NumberOfTurnsLM"] * gex["General"]["TxLoopArea"] * gex[channel]["TxApproximateCurrent"]
     return gex
 
 def parse(nameorfile, **kw):
