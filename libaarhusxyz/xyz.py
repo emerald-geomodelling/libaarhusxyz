@@ -372,6 +372,20 @@ class XYZ(object):
 
     def plot_line(self, line_no, ax=None):
         if ax is None: ax = plt.gca()
+        if "resistivity" in self.layer_data:
+            self._plot_line_resistivity(line_no, ax)
+        elif "dbdt_ch1gt" in self.layer_data:
+            self._plot_line_raw(line_no, ax)
+        
+    def _plot_line_raw(self, line_no, ax):
+        filt = self.flightlines.line_no == line_no
+        flightlines = self.flightlines.loc[filt]
+        dbdt = self.dbdt_ch1gt.loc[filt]
+        for gate in range(dbdt.shape[1]):
+            ax.plot(flightlines.xdist, np.log10(-dbdt.values[:,gate]))
+        ax.set_xlabel("xdist (m)")
+            
+    def _plot_line_resistivity(self, line_no, ax):
         filt = self.flightlines.line_no == line_no
         flightlines = self.flightlines.loc[filt]
         resistivity = self.resistivity.loc[filt]
