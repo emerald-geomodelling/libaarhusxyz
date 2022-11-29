@@ -369,33 +369,46 @@ class XYZ(object):
         for colname in ("y", "utmy", "lat"):
             if colname in self.flightlines.columns:
                 return colname
+    @property
+    def z_column(self):
+        for colname in ("elevation", "topo"):
+            if colname in self.flightlines.columns:
+                return colname
 
-    def plot_line(self, line_no, ax=None):
-        if ax is None: ax = plt.gca()
+    def plot_line(self, line_no, ax=None, **kw):
+        if ax is None:
+            import matplotlib.pyplot as plt
+            ax = plt.gca()
         if "resistivity" in self.layer_data:
-            self._plot_line_resistivity(line_no, ax)
+            self._plot_line_resistivity(line_no, ax, **kw)
         elif "dbdt_ch1gt" in self.layer_data:
-            self._plot_line_raw(line_no, ax)
+            self._plot_line_raw(line_no, ax, **kw)
         
-    def _plot_line_raw(self, line_no, ax):
+    def _plot_line_raw(self, line_no, ax, label="gate %(gate)i @ %(time).2e", **kw):
         filt = self.flightlines.line_no == line_no
         flightlines = self.flightlines.loc[filt]
         dbdt = self.dbdt_ch1gt.loc[filt]
+        times = self.model_info.get('gate times for channel 1', None)
         for gate in range(dbdt.shape[1]):
-            ax.plot(flightlines.xdist, np.log10(-dbdt.values[:,gate]))
+            i = {"gate": gate,
+                 "time": times[gate] if times else "NaN"}
+            ax.plot(flightlines.xdist, -dbdt.values[:,gate], label=label % i, **kw)
+        ax.set_yscale("log") 
+        ax.set_ylabel("|dBdt| (T/s)")
         ax.set_xlabel("xdist (m)")
             
-    def _plot_line_resistivity(self, line_no, ax):
+    def _plot_line_resistivity(self, line_no, ax, **kw):
         filt = self.flightlines.line_no == line_no
         flightlines = self.flightlines.loc[filt]
         resistivity = self.resistivity.loc[filt]
         dep_top = self.layer_data["dep_top"].loc[filt].copy()
         dep_bot = self.layer_data["dep_bot"].loc[filt].copy()
 
-        if "elevation" in self.flightlines.columns:
+        z = self.z_column
+        if z:
             for col in dep_top.columns:
-                dep_top[col] = self.flightlines["elevation"].loc[filt] - dep_top[col]
-                dep_bot[col] = self.flightlines["elevation"].loc[filt] - dep_bot[col]
+                dep_top[col] = self.flightlines.loc[filt, z] - dep_top[col]
+                dep_bot[col] = self.flightlines.loc[filt, z] - dep_bot[col]
         else:
             dep_top = -dep_top
             dep_bot = -dep_bot
@@ -408,7 +421,7 @@ class XYZ(object):
         zcoords = zcoords[:,::-1].T
         data = data[:,::-1].T
 
-        ax.pcolor(xcoords, zcoords, data, cmap="turbo", shading='flat')
+        ax.pcolor(xcoords, zcoords, data, cmap="turbo", shading='flat', **kw)
 
     def plot(self, fig = None):
         if fig is None:
