@@ -385,7 +385,7 @@ class XYZ(object):
             self._plot_line_raw(line_no, ax, **kw)
         
     def _plot_line_raw(self, line_no, ax, label="gate %(gate)i @ %(time).2e", **kw):
-        filt = self.flightlines.line_no == line_no
+        filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
         dbdt = self.dbdt_ch1gt.loc[filt]
         times = self.model_info.get('gate times for channel 1', None)
@@ -398,7 +398,7 @@ class XYZ(object):
         ax.set_xlabel("xdist (m)")
             
     def _plot_line_resistivity(self, line_no, ax, cmap="turbo", shading='flat', **kw):
-        filt = self.flightlines.line_no == line_no
+        filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
         resistivity = self.resistivity.loc[filt]
         dep_top = self.layer_data["dep_top"].loc[filt].copy()
@@ -428,7 +428,7 @@ class XYZ(object):
             import matplotlib.pyplot as plt
             fig = plt.figure()
         
-        lines = self.flightlines.line_no.unique()
+        lines = self.flightlines[self.line_id_column].unique()
         w = int(np.ceil(np.sqrt(len(lines))))
         h = int(np.ceil(len(lines) / w))
 
