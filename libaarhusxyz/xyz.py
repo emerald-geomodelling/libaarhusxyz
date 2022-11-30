@@ -397,7 +397,7 @@ class XYZ(object):
         ax.set_ylabel("|dBdt| (T/s)")
         ax.set_xlabel("xdist (m)")
             
-    def _plot_line_resistivity(self, line_no, ax, **kw):
+    def _plot_line_resistivity(self, line_no, ax, cmap="turbo", shading='flat', **kw):
         filt = self.flightlines.line_no == line_no
         flightlines = self.flightlines.loc[filt]
         resistivity = self.resistivity.loc[filt]
@@ -421,8 +421,8 @@ class XYZ(object):
         zcoords = zcoords[:,::-1].T
         data = data[:,::-1].T
 
-        ax.pcolor(xcoords, zcoords, data, cmap="turbo", shading='flat', **kw)
-
+        ax.pcolor(xcoords, zcoords, data, cmap=cmap, shading=shading, **kw)
+        
     def plot(self, fig = None):
         if fig is None:
             import matplotlib.pyplot as plt
