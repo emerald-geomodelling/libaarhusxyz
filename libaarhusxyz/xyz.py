@@ -152,6 +152,7 @@ def _parse(inputfile, source=None, alcfile=None, **kw):
     na_values = _NA_VALUES
     if "dummy" in headers:
         na_values + na_values + [headers["dummy"]]
+    #print(col_names)
     full_df = pd.read_csv(inputfile, sep = ",?[\s]+", names = col_names, na_values=na_values, engine = 'python')
 
     line_separators = (full_df[full_df.columns[0]] == "Line") | (full_df[full_df.columns[0]] == "Tie")
