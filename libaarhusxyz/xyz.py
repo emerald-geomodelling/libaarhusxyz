@@ -375,7 +375,15 @@ class XYZ(object):
             if colname in self.flightlines.columns:
                 return colname
 
+    @property
+    def alt_column(self):
+        for colname in ("alt", "tx_alt"):
+            if colname in self.flightlines.columns:
+                return colname
+
     def plot_line(self, line_no, ax=None, **kw):
+        if "xdist" not in self.flightlines.columns:
+            self.calculate_xdist()
         if ax is None:
             import matplotlib.pyplot as plt
             ax = plt.gca()
@@ -428,6 +436,9 @@ class XYZ(object):
             import matplotlib.pyplot as plt
             fig = plt.figure()
         
+        if "xdist" not in self.flightlines.columns:
+            self.calculate_xdist()
+
         lines = self.flightlines[self.line_id_column].unique()
         w = int(np.ceil(np.sqrt(len(lines))))
         h = int(np.ceil(len(lines) / w))
@@ -439,7 +450,12 @@ class XYZ(object):
             axs = [axs]
         for line_no, ax in zip(lines, axs):
             self.plot_line(line_no, ax)
-        
+
+    def calculate_xdist(self):
+        dxdist = np.insert((  (self.flightlines[self.x_column].iloc[1:].values - self.flightlines[self.x_column].iloc[:-1].values)**2
+                            + (self.flightlines[self.y_column].iloc[1:].values - self.flightlines[self.y_column].iloc[:-1].values)**2)**0.5, 0,0)
+        self.flightlines["xdist"] = np.cumsum(dxdist)
+            
     def __repr__(self):
         max_depth = None
         if "dep_bot" in self.layer_data:
