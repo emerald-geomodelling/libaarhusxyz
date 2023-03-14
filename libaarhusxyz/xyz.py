@@ -10,20 +10,36 @@ from .xyzparser import parse
 
 class XYZ(object):
     def __new__(cls, *arg, **kw):
+        """Usage:
+
+        xyz = XYZ(filename, **kw)
+
+        Where kw can be:
+
+        alcfile=filename
+          Read column mappings from filename (a .ALC file)
+        normalize=bool (default False)
+          Normalize data after reading.
+
+        Any additional arguments are sent to
+        libaarhusxyz.normalizer.normalize()
+        """
+
         normalize = kw.pop("normalize", False)
+        alcfile = kw.pop("alcfile", None)
         self = object.__new__(cls)
-        if arg or kw:
-            if arg and isinstance(arg[0], dict):
+        if arg:
+            if isinstance(arg[0], dict):
                 self.model_dict = arg[0]
             else:
-                self.model_dict = parse(*arg, **kw)
+                self.model_dict = parse(arg[0], alcfile=alcfile)
         else:
             self.model_dict = {"flightlines": pd.DataFrame(columns=["line_no", "x", "y"]),
                                "model_info": {},
                                "layer_data": {}}
         if normalize:
             from . import normalizer
-            normalizer.normalize(self)
+            normalizer.normalize(self, **kw)
         return self
 
     def dump(self, *arg, **kw):
