@@ -9,21 +9,25 @@ from .xyzparser import dump as _dump_function
 from .xyzparser import parse
 
 class XYZ(object):
+    """Usage:
+
+    xyz = XYZ(source, **kw)
+
+    Where source can be a filename to parse, or an already parsed
+    model dictionary (in the same format returned by xyz.to_dict()).
+
+    Where kw can be:
+
+    alcfile=filename
+      Read column mappings from filename (a .ALC file)
+    normalize=bool (default False)
+      Normalize data after reading.
+
+    Any additional arguments are sent to
+    libaarhusxyz.normalizer.normalize()
+
+    """
     def __new__(cls, *arg, **kw):
-        """Usage:
-
-        xyz = XYZ(filename, **kw)
-
-        Where kw can be:
-
-        alcfile=filename
-          Read column mappings from filename (a .ALC file)
-        normalize=bool (default False)
-          Normalize data after reading.
-
-        Any additional arguments are sent to
-        libaarhusxyz.normalizer.normalize()
-        """
 
         normalize = kw.pop("normalize", False)
         alcfile = kw.pop("alcfile", None)
