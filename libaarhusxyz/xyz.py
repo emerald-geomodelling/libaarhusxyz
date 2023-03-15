@@ -38,10 +38,55 @@ class XYZ(object):
                                "model_info": {},
                                "layer_data": {}}
         if normalize:
-            from . import normalizer
-            normalizer.normalize(self, **kw)
+            self.normalize(**kw)
         return self
 
+    def normalize(self, **kw):
+        """This function
+             * Normalizes naming and format to our internal format
+               (or one specified by naming_standard)
+             * Reprojects coordinates
+               To lat/lon, web mercator and optionally to a project_crs
+             * Calculates xdist
+             * Calculate z coordinates
+             * Add missing default columns (filled with NaNs)
+        """
+        from . import normalizer
+        normalizer.normalize(self, **kw)
+
+    def normalize_naming(self, naming_standard="libaarhusxyz"):
+        from . import normalizer
+        normalizer.normalize_naming(self, naming_standard)
+    def normalize_projection(self):
+        from . import normalizer
+        normalizer.normalize_projection(self)
+    def normalize_coordinates(self, project_crs=None):
+        from . import normalizer
+        normalizer.normalize_coordinates(self, project_crs)
+    def normalize_dates(self):
+        from . import normalizer
+        normalizer.normalize_dates(self)
+    def normalize_depths(self):
+        from . import normalizer
+        normalizer.normalize_depths(self)
+        
+    def add_defaults(self, required_columns=None):
+        from . import normalizer
+        normalizer.add_defaults(self, required_columns)
+
+    def calculate_xdist(self):
+        from . import normalizer
+        normalizer.calculate_xdist(self)
+    def calculate_z(self):
+        from . import normalizer
+        normalizer.calculate_z(self)
+    def calculate_height(self):
+        from . import normalizer
+        normalizer.calculate_height(self)
+    def calculate_doi_layer(self):
+        from . import normalizer
+        normalizer.calculate_doi_layer(self)
+        
     def dump(self, *arg, **kw):
         _dump_function(self.model_dict, *arg, **kw)
 

@@ -125,10 +125,14 @@ def calculate_xdist(model):
     df["xdist"] = df.groupby(df["title"])["prevdist"].cumsum()
     del df["prevdist"]
 
-def add_defaults(model, required_columns):
+REQUIRED_COLUMNS = ['resdata',"restotal", "numdata"]
+def add_defaults(model, required_columns=None):
     layer_dfs = model.layer_data
     df = model.flightlines
 
+    if required_columns is None:
+        required_columns = REQUIRED_COLUMNS
+    
     if "doi_lower" not in df.columns:
         df['doi_lower'] = np.full(len(df), 500, dtype=int)
 
@@ -204,7 +208,7 @@ def normalize_naming(model, naming_standard="libaarhusxyz"):
     normalize_headers(model, naming_standard)
     normalize_column_names(model, naming_standard)
         
-def normalize(model, project_crs=None, required_columns = ['resdata',"restotal", "numdata"], naming_standard="libaarhusxyz"):
+def normalize(model, project_crs=None, required_columns=None, naming_standard="libaarhusxyz"):
     """This function
          * Normalizes naming and format to our internal format
          * Reprojects coordinates
