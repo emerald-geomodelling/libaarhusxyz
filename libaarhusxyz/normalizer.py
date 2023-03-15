@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import pyproj
 import re
-import projnames
 import datetime
 import csv
 import pkg_resources
@@ -48,6 +47,8 @@ def get_name_mapper(naming_standard="libaarhusxyz"):
         return newname
     return mapperfn
 
+default_name_mapper = get_name_mapper()
+
 def project(innproj, utproj, xinn, yinn):
     innproj = int(innproj)
     utproj = int(utproj)
@@ -80,6 +81,9 @@ def normalize_column_names(model, naming_standard="libaarhusxyz"):
     model.flightlines = df
 
 def normalize_projection(model):
+    # Import here and not at top of file, as this is slow to import...
+    import projnames
+    
     headers = model.model_info
     headers["projection"] = None
     if "coordinate system" in headers:

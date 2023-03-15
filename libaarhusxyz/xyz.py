@@ -7,6 +7,7 @@ except:
 
 from .xyzparser import dump as _dump_function
 from .xyzparser import parse
+from . import normalizer
 
 class XYZ(object):
     """Usage:
@@ -55,40 +56,29 @@ class XYZ(object):
              * Calculate z coordinates
              * Add missing default columns (filled with NaNs)
         """
-        from . import normalizer
         normalizer.normalize(self, **kw)
 
     def normalize_naming(self, naming_standard="libaarhusxyz"):
-        from . import normalizer
         normalizer.normalize_naming(self, naming_standard)
     def normalize_projection(self):
-        from . import normalizer
         normalizer.normalize_projection(self)
     def normalize_coordinates(self, project_crs=None):
-        from . import normalizer
         normalizer.normalize_coordinates(self, project_crs)
     def normalize_dates(self):
-        from . import normalizer
         normalizer.normalize_dates(self)
     def normalize_depths(self):
-        from . import normalizer
         normalizer.normalize_depths(self)
         
     def add_defaults(self, required_columns=None):
-        from . import normalizer
         normalizer.add_defaults(self, required_columns)
 
     def calculate_xdist(self):
-        from . import normalizer
         normalizer.calculate_xdist(self)
     def calculate_z(self):
-        from . import normalizer
         normalizer.calculate_z(self)
     def calculate_height(self):
-        from . import normalizer
         normalizer.calculate_height(self)
     def calculate_doi_layer(self):
-        from . import normalizer
         normalizer.calculate_doi_layer(self)
         
     def dump(self, *arg, **kw):
@@ -154,6 +144,12 @@ class XYZ(object):
         
     def to_dict(self):
         return self.model_dict
+
+    def get_column(self, name):
+        for col in self.flightlines.columns:
+            if normalizer.default_name_mapper(col) == name:
+                return col
+        return None
         
     def __getattr__(self, name):
         # This outer if is only here to make pickle not have a hickup
@@ -164,8 +160,12 @@ class XYZ(object):
                 return self.layer_data[name]
             if name in self.layer_params:
                 return self.layer_params[name]
-        raise AttributeError(name)
 
+            if name.endswith("_column"):
+                return self.get_column(name.split("_column")[0])
+            
+        raise AttributeError(name)
+    
     def __setattr__(self, name, value):
         if name not in ("model_dict", "model_info", "layer_data", "layer_params"):
             if name in self.model_info:
