@@ -92,6 +92,13 @@ class XYZ(object):
         return self.model_info.get("title", self.model_info.get("source", "Unknown"))
         
     @property
+    def info(self):
+        return self.model_dict["model_info"]
+    @model_info.setter
+    def info(self, value):
+        self.model_dict["model_info"] = value
+        
+    @property
     def model_info(self):
         return self.model_dict["model_info"]
     @model_info.setter
@@ -112,6 +119,12 @@ class XYZ(object):
     def flightlines(self, value):
         self.model_dict["flightlines"] = value
         
+    @property
+    def data(self):
+        return self.model_dict["layer_data"]
+    @layer_data.setter
+    def data(self, value):
+        self.model_dict["layer_data"] = value
     @property
     def layer_data(self):
         return self.model_dict["layer_data"]

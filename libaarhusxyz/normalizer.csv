@@ -30,7 +30,11 @@ dbdt_std_ch1gt,,STD_Ch01
 dbdt_std_ch2gt,,STD_Ch02
 dbdt_inuse_ch1gt,,InUse_Ch01
 dbdt_inuse_ch2gt,,InUse_Ch02
-,,
+,lm_z_dbdt,Gate_Ch01
+,hm_z_dbdt,Gate_Ch02
+,relunc_lm_z,STD_Ch01
+,relunc_hm_z,STD_Ch02
+
 topo,elevation,
 doi_upper,doi_conservative,
 doi_lower,doi_standard,
