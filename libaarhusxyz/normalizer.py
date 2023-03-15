@@ -13,11 +13,40 @@ def _read_csv(f):
 with pkg_resources.resource_stream("libaarhusxyz", "normalizer.csv") as f:
     name_mapping = _read_csv(f)
 
-def get_name_mapper(naming_standard="libaarhusxyz"):
-    mapper =name_mapping.melt(naming_standard, var_name="naming_standard", value_name="src_name")
-    mapper = mapper.loc[~mapper.src_name.isna()]
-    return mapper.set_index("src_name")[naming_standard]
+def complete_name_mapping(name_mapping):
+    """Fill in missing values in the name mapping using other rows in the
+    mapping."""
+    for col in name_mapping.columns:
+        if col == "libaarhusxyz": continue
+        fromfilt = ~name_mapping["alc"].isna() & ~name_mapping["libaarhusxyz"].isna()
+        mapping = name_mapping.loc[fromfilt].set_index("libaarhusxyz")["alc"]
+        tofilt = name_mapping["alc"].isna() & name_mapping.libaarhusxyz.isin(mapping.index)
+        name_mapping.loc[tofilt, "alc"] = mapping.loc[
+            name_mapping.loc[tofilt, "libaarhusxyz"]].values
+
+complete_name_mapping(name_mapping)
     
+with pkg_resources.resource_stream("libaarhusxyz", "normalizer_pattern.csv") as f:
+    name_mapping_patterns = _read_csv(f)
+
+def map_name_pattern(value):
+    for idx, row in name_mapping_patterns.iterrows():
+        if re.match(row.pattern, value):
+            return re.sub(row.pattern, row.replacement, value)
+    return value
+    
+def get_name_mapper(naming_standard="libaarhusxyz"):
+    mapper = name_mapping.melt(naming_standard, var_name="naming_standard", value_name="src_name")
+    mapper = mapper.loc[~mapper.src_name.isna()]
+    mapper = mapper.set_index("src_name")[naming_standard]
+    mapper = mapper[~mapper.index.duplicated(keep='first')]
+    def mapperfn(name):
+        newname = map_name_pattern(name)
+        if newname in mapper.index:
+            newname = mapper.loc[newname]
+        return newname
+    return mapperfn
+
 def project(innproj, utproj, xinn, yinn):
     innproj = int(innproj)
     utproj = int(utproj)
@@ -30,9 +59,8 @@ def normalize_headers(model, naming_standard="libaarhusxyz"):
 
     mapper = get_name_mapper(naming_standard)
     for name in list(headers.keys()):
-        if name in mapper:
-            headers[mapper[name]] = headers.pop(name)
-                
+        headers[mapper(name)] = headers.pop(name)                
+            
     headers["inversion_type"] = None
     if 'node name(s)' in headers:
         headers["inversion_type"] = headers['node name(s)'].split("_")[0]
@@ -43,11 +71,10 @@ def normalize_column_names(model, naming_standard="libaarhusxyz"):
     headers = model.model_info
      
     mapper = get_name_mapper(naming_standard)
-    df = df.rename(columns=mapper)
+    df.columns = [mapper(name) for name in df.columns]
 
     for name in list(layer_dfs.keys()):
-        if name in mapper:
-            layer_dfs[mapper[name]] = layer_dfs.pop(name)
+        layer_dfs[mapper(name)] = layer_dfs.pop(name)
         
     model.flightlines = df
 
@@ -55,22 +82,9 @@ def normalize_projection(model):
     headers = model.model_info
     headers["projection"] = None
     if "coordinate system" in headers:
-        match = re.match(r".*\(epsg:(.*)\).*", headers["coordinate system"])
-        if match:
-            headers["projection"] = int(match.groups()[0])
-        else:
-            name = headers["coordinate system"].lower()
-            name = name.replace("wgs84", "wgs 84")
-            ptn = re.compile(".*" + name.replace(" ", ".*") + ".*")
-            matches = [(name, value)
-                       for name, value in projnames.projections.items()
-                       if ptn.match(name.lower())]
-            if matches:
-                # NOTE: Sometimes the projection given does not
-                # specify N or S for UTM zones... We are forced to
-                # choose one here quite arbitrarily... This is why we
-                # should use EPSG codes kids!
-                headers["projection"] = matches[0][1]
+        match = projnames.search(headers["coordinate system"])
+        if match is not None:
+            headers["projection"] = match
 
 def normalize_coordinates(model, project_crs=None):
     df = model.flightlines

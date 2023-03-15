@@ -1,0 +1,3 @@
+pattern,replacement
+e_.*utm.*,utmx
+n_.*utm.*,utmy
