@@ -208,13 +208,31 @@ def normalize_dates(model):
         ).drop(
             columns = ["date", "time"])
 
+def normalize_nans(model, nan_value=None):
+    if nan_value is None:
+        if 'dummy' in model.model_info.keys():
+            nan_value = model.model_info['dummy']
+        else:
+            nan_value='*'
+        
+    for col in model.flightlines.columns:
+        filt=model.flightlines[col]==dummy_value
+        model.flightlines.loc[filt,col]=np.nan
+    
+    for key in model.layer_data.keys():
+        filt=model.layer_data[key]==dummy_value
+        model.layer_data[key][filt]=np.nan
+
+    # FIXME: Convert column types from O here?
+        
 def normalize_naming(model, naming_standard="libaarhusxyz"):
     normalize_headers(model, naming_standard)
     normalize_column_names(model, naming_standard)
         
-def normalize(model, project_crs=None, required_columns=None, naming_standard="libaarhusxyz"):
+def normalize(model, project_crs=None, required_columns=None, naming_standard="libaarhusxyz", nan_value=None):
     """This function
          * Normalizes naming and format to our internal format
+         * Replaces * with NaN:s
          * Reprojects coordinates
          * Calculates xdist
          * Calculate z coordinates
@@ -223,6 +241,7 @@ def normalize(model, project_crs=None, required_columns=None, naming_standard="l
 
     normalize_naming(model, naming_standard)
 
+    normalize_nans(model, nan_value)
     normalize_projection(model)
     normalize_coordinates(model, project_crs)
     normalize_dates(model)

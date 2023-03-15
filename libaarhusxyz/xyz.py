@@ -50,6 +50,7 @@ class XYZ(object):
         """This function
              * Normalizes naming and format to our internal format
                (or one specified by naming_standard)
+             * Replaces * with NaN:s
              * Reprojects coordinates
                To lat/lon, web mercator and optionally to a project_crs
              * Calculates xdist
@@ -60,6 +61,8 @@ class XYZ(object):
 
     def normalize_naming(self, naming_standard="libaarhusxyz"):
         normalizer.normalize_naming(self, naming_standard)
+    def normalize_nans(self, nan_value=None):
+        normalizer.normalize_nans(self, nan_value)
     def normalize_projection(self):
         normalizer.normalize_projection(self)
     def normalize_coordinates(self, project_crs=None):
