@@ -40,6 +40,7 @@ def get_name_mapper(naming_standard="libaarhusxyz"):
     mapper = mapper.loc[~mapper.src_name.isna()]
     mapper = mapper.set_index("src_name")[naming_standard]
     mapper = mapper[~mapper.index.duplicated(keep='first')]
+    mapper = mapper.loc[~pd.isnull(mapper)]
     def mapperfn(name):
         newname = map_name_pattern(name)
         if newname in mapper.index:
