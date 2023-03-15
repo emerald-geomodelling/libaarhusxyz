@@ -94,7 +94,7 @@ class XYZ(object):
     @property
     def info(self):
         return self.model_dict["model_info"]
-    @model_info.setter
+    @info.setter
     def info(self, value):
         self.model_dict["model_info"] = value
         
@@ -122,7 +122,7 @@ class XYZ(object):
     @property
     def data(self):
         return self.model_dict["layer_data"]
-    @layer_data.setter
+    @data.setter
     def data(self, value):
         self.model_dict["layer_data"] = value
     @property
