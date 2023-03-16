@@ -242,18 +242,37 @@ class XYZ(object):
         elif "dbdt_ch1gt" in self.layer_data:
             return self._plot_line_raw(line_no, ax, **kw)
         
-    def _plot_line_raw(self, line_no, ax, label="gate %(gate)i @ %(time).2e", **kw):
+    def _plot_line_raw(self, line_no, ax, label="gate %(gate)i[%(channel)i] @ %(time).2e", **kw):
         filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
+        
         dbdt = self.dbdt_ch1gt.loc[filt]
         times = self.model_info.get('gate times for channel 1', None)
         for gate in range(dbdt.shape[1]):
-            i = {"gate": gate,
-                 "time": times[gate] if times else "NaN"}
-            ax.plot(flightlines.xdist, -dbdt.values[:,gate], label=label % i, **kw)
+            i = {"channel": 1,
+                 "gate": gate,
+                 "time": times[gate] if times else np.NaN}
+            ax.plot(flightlines.xdist, np.abs(dbdt.values[:,gate]), label=label % i, **kw)
         ax.set_yscale("log") 
-        ax.set_ylabel("|dBdt| (T/s)")
+        ax.set_ylabel("Channel 1 |dBdt| (T/s)")
         ax.set_xlabel("xdist (m)")
+
+        if "dbdt_ch2gt" in self.layer_data:
+            ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
+            ax2 = ax_divider.append_axes("bottom", size="100%", pad="2%")
+
+            dbdt = self.dbdt_ch2gt.loc[filt]
+            times = self.model_info.get('gate times for channel 2', None)
+            for gate in range(dbdt.shape[1]):
+                i = {"channel": 2,
+                     "gate": gate,
+                     "time": times[gate] if times else np.NaN}
+                ax2.plot(flightlines.xdist, np.abs(dbdt.values[:,gate]), label=label % i, **kw)
+            ax2.set_yscale("log") 
+            ax2.set_ylabel("Channel 2 |dBdt| (T/s)")
+            ax2.set_xlabel("xdist (m)")
+            ax.get_shared_x_axes().join(ax, ax2)
+            
         return ax
         
     def _plot_line_altitude(self, line_no, ax, cmap="turbo", shading='flat', **kw):
@@ -283,7 +302,6 @@ class XYZ(object):
         zcoords = np.concatenate((dep_top.values, dep_bot.values[:,-1:]), axis=1)
         zcoords = np.concatenate((zcoords, zcoords[-1:,:]))
 
-#        data = np.log10(resistivity.values)
         data = resistivity.values
         zcoords = zcoords[:,::-1].T
         data = data[:,::-1].T
@@ -291,7 +309,6 @@ class XYZ(object):
         m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
 
         ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
-
         cax = ax_divider.append_axes("right", size="7%", pad="2%")
         fig = plt.gcf()
         cb = fig.colorbar(m, label="Resistivity (Ωm)", cax=cax)
