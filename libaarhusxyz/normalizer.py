@@ -37,13 +37,15 @@ def map_name_pattern(value):
 def get_name_mapper(naming_standard="libaarhusxyz"):
     mapper = name_mapping.melt(naming_standard, var_name="naming_standard", value_name="src_name")
     mapper = mapper.loc[~mapper.src_name.isna()]
+    mapper["src_name"] = mapper["src_name"].str.lower()
     mapper = mapper.set_index("src_name")[naming_standard]
     mapper = mapper[~mapper.index.duplicated(keep='first')]
     mapper = mapper.loc[~pd.isnull(mapper)]
     def mapperfn(name):
         newname = map_name_pattern(name)
-        if newname in mapper.index:
-            newname = mapper.loc[newname]
+        lnewname = newname.lower()
+        if lnewname in mapper.index:
+            newname = mapper.loc[lnewname]
         return newname
     return mapperfn
 

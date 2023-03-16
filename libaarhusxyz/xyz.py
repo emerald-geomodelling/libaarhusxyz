@@ -5,6 +5,10 @@ try:
 except:
     projnames = None
 
+import mpl_toolkits.axes_grid1.axes_divider
+import matplotlib.pyplot as plt
+import matplotlib.colors
+
 from .xyzparser import dump as _dump_function
 from .xyzparser import parse
 from . import normalizer
@@ -201,7 +205,7 @@ class XYZ(object):
 
     @property
     def line_id_column(self):
-        for colname in ("line_id", "line_no"):
+        for colname in ("title", "line_id", "line_no"):
             if colname in self.flightlines.columns:
                 return colname
     @property
@@ -233,9 +237,10 @@ class XYZ(object):
             import matplotlib.pyplot as plt
             ax = plt.gca()
         if "resistivity" in self.layer_data:
-            self._plot_line_resistivity(line_no, ax, **kw)
+            self._plot_line_altitude(line_no, ax, cmap="turbo", shading='flat', **kw)
+            return self._plot_line_resistivity(line_no, ax, **kw)
         elif "dbdt_ch1gt" in self.layer_data:
-            self._plot_line_raw(line_no, ax, **kw)
+            return self._plot_line_raw(line_no, ax, **kw)
         
     def _plot_line_raw(self, line_no, ax, label="gate %(gate)i @ %(time).2e", **kw):
         filt = self.flightlines[self.line_id_column] == line_no
@@ -249,7 +254,15 @@ class XYZ(object):
         ax.set_yscale("log") 
         ax.set_ylabel("|dBdt| (T/s)")
         ax.set_xlabel("xdist (m)")
-            
+        return ax
+        
+    def _plot_line_altitude(self, line_no, ax, cmap="turbo", shading='flat', **kw):
+        if self.alt_column is None or self.z_column is None:
+            return
+        filt = self.flightlines[self.line_id_column] == line_no
+        flightlines = self.flightlines.loc[filt]
+        ax.plot(flightlines.xdist, flightlines[self.alt_column] + flightlines[self.z_column], label="Instrument position")
+        
     def _plot_line_resistivity(self, line_no, ax, cmap="turbo", shading='flat', **kw):
         filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
@@ -270,11 +283,20 @@ class XYZ(object):
         zcoords = np.concatenate((dep_top.values, dep_bot.values[:,-1:]), axis=1)
         zcoords = np.concatenate((zcoords, zcoords[-1:,:]))
 
-        data = np.log10(resistivity.values)
+#        data = np.log10(resistivity.values)
+        data = resistivity.values
         zcoords = zcoords[:,::-1].T
         data = data[:,::-1].T
 
-        ax.pcolor(xcoords, zcoords, data, cmap=cmap, shading=shading, **kw)
+        m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
+
+        ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
+
+        cax = ax_divider.append_axes("right", size="7%", pad="2%")
+        fig = plt.gcf()
+        cb = fig.colorbar(m, label="Resistivity (Ωm)", cax=cax)
+
+        return ax
         
     def plot(self, fig = None):
         if fig is None:
