@@ -137,4 +137,24 @@ def dump(gex, nameorfile, **kw):
             return _dump(gex, f, **kw)
     else:
         return _dump(gex, nameorfile, **kw)
+    
+_dump_function = dump
 
+class GEX(object):
+    def __init__(self, gex_dict, **kw):
+        if not isinstance(gex_dict, dict):
+            gex_dict = parse(gex_dict, **kw)
+        self.gex_dict = gex_dict
+
+    def dump(self, *arg, **kw):
+        _dump_function(self.gex_dict, *arg, **kw)
+
+    def gate_times(self, channel='Channel1'):
+        gex = self.gex_dict
+        no_gates = int(gex[channel]['NoGates'])
+        remove_gates_from = int(gex[channel].get('RemoveGatesFrom', 0))
+        return gex['General']['GateTime'][remove_gates_from:no_gates,:] + gex[channel]['GateTimeShift'] + gex[channel].get('MeaTimeDelay', 0.0)
+
+    def __getattr__(self, name):
+        return self.gex_dict[name]
+        
