@@ -237,7 +237,7 @@ class XYZ(object):
             import matplotlib.pyplot as plt
             ax = plt.gca()
         if "resistivity" in self.layer_data:
-            self._plot_line_altitude(line_no, ax, cmap="turbo", shading='flat', **kw)
+            self._plot_line_altitude(line_no, ax, **kw)
             return self._plot_line_resistivity(line_no, ax, **kw)
         elif "dbdt_ch1gt" in self.layer_data:
             return self._plot_line_raw(line_no, ax, **kw)
