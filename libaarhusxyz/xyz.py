@@ -357,22 +357,22 @@ class XYZ(object):
 
     @property
     def line_id_column(self):
-        for colname in ("line_id", "line_no"):
+        for colname in ("line_id", "line_no", "Line"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def x_column(self):
-        for colname in ("x", "utmx", "lon", "lng"):
+        for colname in ("x", "utmx", "lon", "lng", "UTMX"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def y_column(self):
-        for colname in ("y", "utmy", "lat"):
+        for colname in ("y", "utmy", "lat", "UTMY"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def z_column(self):
-        for colname in ("elevation", "topo"):
+        for colname in ("elevation", "topo", "Topography"):
             if colname in self.flightlines.columns:
                 return colname
 
