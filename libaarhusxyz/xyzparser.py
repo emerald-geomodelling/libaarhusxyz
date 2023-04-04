@@ -221,12 +221,12 @@ def _dump(data, file, alcfile=None):
     df = _un_split_layer_columns(data)
     for key, value in data['model_info'].items():
         if key != 'source':
-            file.write("/" + str(key) + "\n")
+            file.write(b"/" + str(key).encode('utf-8') + b"\n")
             if isinstance(value, list):
-                file.write("/" + ' '.join(str(item) for item in value) + "\n")
+                file.write(b"/" + b' '.join(str(item).encode('utf-8') for item in value) + b"\n")
             else:
-                file.write("/" + str(value) + "\n")
-    file.write('/ ')
+                file.write(b"/" + str(value).encode('utf-8') + b"\n")
+    file.write(b'/ ')
     df.to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
 
     if alcfile is not None:
