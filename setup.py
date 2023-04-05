@@ -18,7 +18,8 @@ setuptools.setup(
     install_requires=[
         "numpy",
         "pandas",
-        "pyproj"
+        "pyproj",
+        "matplotlib"
     ],
     extras_require={
         'normalisation': ["pryproj", "projnames"],

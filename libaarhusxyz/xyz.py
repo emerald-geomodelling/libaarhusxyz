@@ -346,7 +346,7 @@ class XYZ(object):
             resistivity = repr(pd.DataFrame(self.resistivity.melt().rename(columns={"value": "Resistivity"})["Resistivity"].describe()))
             
         return "\n".join([
-            self.title,
+            self.title or "<Unnamed model>",
             "--------------------------------",
             repr(pd.DataFrame([self.model_info]).T),
             "",
