@@ -7,6 +7,7 @@ Created on Fri Oct 29 11:36:28 2021
 
 import numpy as np
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 
 
@@ -157,4 +158,27 @@ class GEX(object):
 
     def __getattr__(self, name):
         return self.gex_dict[name]
+
+    def plot(self, ax=None):
+        if ax is None:
+            ax = plt.gca()
+        
+        waveform_hm = self.General['WaveformHMPoint']
+        waveform_lm = self.General['WaveformLMPoint']
+
+        time_input_currents_hm = waveform_hm[:,0]
+        input_currents_hm = waveform_hm[:,1]
+        time_input_currents_lm = waveform_lm[:,0]
+        input_currents_lm = waveform_lm[:,1]
+
+        ax.vlines(self.gate_times('Channel1')[:,0], 0, 0.5, color="red", label="LM gates")
+        ax.vlines(self.gate_times('Channel2')[:,0], 0.5, 1, color="purple", label="HM gates")
+
+        ax.plot(time_input_currents_hm, input_currents_hm, label="HM")
+        ax.plot(time_input_currents_lm, input_currents_lm, label="LM")
+
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Current")
+        ax.set_xscale("symlog", linthresh=1e-6)
+        ax.legend(loc="upper left")
         
