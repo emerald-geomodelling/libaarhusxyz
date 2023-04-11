@@ -235,7 +235,7 @@ def _dump(data, file, alcfile=None):
 def dump(data_in, nameorfile, **kw):
     data = copy.deepcopy(data_in)
     if isinstance(nameorfile, str):
-        with open(nameorfile, 'w') as f:
+        with open(nameorfile, 'wb') as f:
             return _dump(data, f, **kw)
     else:
         return _dump(data, nameorfile, **kw)
