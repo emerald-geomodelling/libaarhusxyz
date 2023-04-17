@@ -69,7 +69,11 @@ def _parse(inputfile):
     
     for channel in ["Channel1", "Channel2"]:
         if channel in gex.keys():
-            gex[channel]['ApproxDipoleMoment']= gex["General"]["NumberOfTurnsLM"] * gex["General"]["TxLoopArea"] * gex[channel]["TxApproximateCurrent"]
+            if "Channel1" in channel:
+                NumberOfTurns=gex["General"]["NumberOfTurnsLM"]
+            elif "Channel2" in channel:
+                NumberOfTurns=gex["General"]["NumberOfTurnsHM"]
+            gex[channel]['ApproxDipoleMoment']= gex["General"]["NumberOfTurnsHM"] * gex["General"]["TxLoopArea"] * gex[channel]["TxApproximateCurrent"]
     return gex
 
 def parse(nameorfile, **kw):
