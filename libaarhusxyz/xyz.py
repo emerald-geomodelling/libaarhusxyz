@@ -1,274 +1,106 @@
-# Originally from https://github.com/EMeraldGeo/deprecated-examples-Clustering/blob/master/aem_inv_xyz.py
-
 import pandas as pd
 import numpy as np
-import copy
-import re
 try:
     import projnames
 except:
     projnames = None
-from . import transforms
-from . import alc
 
-_RE_FLOATS = re.compile(r"^ *([-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)(\s+[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?)*$")
-_RE_INTS = re.compile(r"^ *([-+]?[0-9]+)(\s+[-+]?[0-9]+)*$")
-_RE_FLOAT = re.compile(r"^[-+]?[0-9]*(\.[0-9]*)?([eE][-+]?[0-9]+)?$")
-_RE_INT = re.compile(r"^[-+]?[0-9]+$")
+import mpl_toolkits.axes_grid1.axes_divider
+import matplotlib.pyplot as plt
+import matplotlib.colors
 
-# We match these types of column names for layer data:
-#   rho_i[6]
-#   rho_i(6)
-#   rho_i_6
-# As of 2022-09-05, We also check for columns that have a numerical suffix but no separator like this:
-#   rho_i6
-# We treat these cases as "ambiguous", and they are treated differenly than the three other cases above. See more in the
-# function _transfer_per_location_cols_with_numerical_suffix.
-_RE_LAYER_COL_WITH_SEPARATOR = re.compile(r"^(.*?)[(_\[]([0-9]+)[)\]]?$")
-_RE_ALL_NUMBERED_COL = re.compile(r"^(.*?)[(_\[]?([0-9]+)[)\]]?$")
-
-_NA_VALUES = ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>",
-             "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null", "*"]
-
-def _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_cols, ambiguous_groups):
-    """
-    Search through the dictionary colgroups. If any list of columns has a length of only 1, parse this as a
-    per-sounding columns instead, and transfer columns to the list per_sounding_cols.
-
-    For the groups listed in "ambiguous_groups", we do an extra check because their numerical suffix is not separated
-    with an extra '[]', '()', or '_' (.e.g, 'rho_i6','Misc1', 'Current_Ch01', 'Current_Ch02'). These ones are transfered
-     to per_sounding_cols if they have:
-        a. a length of less than 3, or
-        b. end in "Ch", "CH", or "ch" (usually a column for data about a channel rather than data sampled in
-         depth or time)
-
-    @param colgroups: dicitonary of group_name (str) on keys and group columns (list) as values
-    @param per_sounding_cols: list of columns to parse as per-souding locations
-    @param ambiguous_groups: list of groups whose columns have a numerical suffix but no separator (e.g. "rho_i_std" for
-     columns ['rho_i_std1', 'rho_i_std2', ...])
-    @return: modified colgroups and per_sounding_cols
-    """
-    groups_to_delete = []
-    for group_name, group_cols in colgroups.items():
-        if len(group_cols) < 2:
-            per_sounding_cols += group_cols
-            groups_to_delete.append(group_name)
-        elif group_name in ambiguous_groups and (len(group_cols) < 3 or group_name[-2:].lower() == "ch"):
-            per_sounding_cols += group_cols
-            groups_to_delete.append(group_name)
-
-    for group_name in groups_to_delete: colgroups.pop(group_name)
-    return colgroups, per_sounding_cols
-
-def _split_layer_columns(df):
-    per_layer_cols = [col for col in df.columns if re.match(_RE_LAYER_COL_WITH_SEPARATOR, col)]
-
-    all_numbered_cols = [col for col in df.columns if re.match(_RE_ALL_NUMBERED_COL, col)]
-    ambiguous_cols = [col for col in all_numbered_cols if col not in per_layer_cols]
-
-    per_sounding_cols = [col for col in df.columns if (not col in per_layer_cols) and (not col in ambiguous_cols)]
-
-    colgroups = {}
-    for col in per_layer_cols:
-        match = re.match(_RE_LAYER_COL_WITH_SEPARATOR, col)
-        if not match: continue
-        group = match.groups()[0]
-        if group not in colgroups: colgroups[group] = []
-        colgroups[group].append(col)
-
-    ambiguous_groups = []
-    for col in ambiguous_cols:
-        match = re.match(_RE_ALL_NUMBERED_COL, col)
-        if not match: continue
-        group = match.groups()[0]
-        if group not in colgroups:
-            colgroups[group] = []
-            ambiguous_groups.append(group)
-        colgroups[group].append(col)
-
-    colgroups, per_sounding_cols = _transfer_per_location_cols_with_numerical_suffix(colgroups, per_sounding_cols, ambiguous_groups)
-
-    def columns_to_layers(columns):
-        matches = [re.match(_RE_ALL_NUMBERED_COL, col) for col in columns]
-        layers = np.array([int(match.groups()[1]) if match else -1 for match in matches])
-        layers -= np.min(layers)
-        return dict(zip(columns, layers))
-        
-    colgroups = {key.strip("_"):
-                 df[columns].rename(
-                     columns = columns_to_layers(columns))
-                 for key, columns in colgroups.items()}
-
-    return df[per_sounding_cols], colgroups
-
-def _parse(inputfile, source=None, alcfile=None, **kw):
-    headers = {}
-    
-    name = None
-    col_names = None
-
-    while True:
-        pos = inputfile.tell()
-        line = inputfile.readline()
-        
-        if not line:
-            raise EOFError("End of file reached while still reading header lines")
-        
-        if not line.startswith("/"):
-            inputfile.seek(pos)
-            break
-
-        if re.match(r"^/(([\s=]*)|([\s-]*))$", line):
-            # Lines line / ======== ======== ======== are just dividers in some files
-            continue
-
-        if line.startswith("/ "):
-            # Always set this, so we use the last one
-            col_names = [value.lower().strip(",")
-                         for value in line[1:].strip().split(' ')
-                         if value != '']
-        
-        line = line[1:].strip()
-
-        if line == 'HEADER:':
-            continue
-        
-        if line.startswith("Number of gates for channel"):
-            channel_nr=line.split("is")[0].split()[-1]  
-            headerword="Number of gates for channel {}".format(channel_nr).lower()
-            headers[headerword] = line.split()[-1]
-            name = None
-        elif line.startswith("Gates for channel"):
-            channel_nr=line.split(":")[0].split()[-1]
-            headerword="Gate times for channel {}".format(channel_nr).lower()
-            headers[headerword] = line.split(": ")[-1]
-            name = None
-        elif name is None:
-            name = line.lower()
-        else:
-            headers[name] = line
-            name = None
-
-    na_values = _NA_VALUES
-    if "dummy" in headers:
-        na_values + na_values + [headers["dummy"]]
-    #print(col_names)
-    full_df = pd.read_csv(inputfile, sep = ",?[\s]+", names = col_names, na_values=na_values, engine = 'python')
-
-    line_separators = (full_df[full_df.columns[0]] == "Line") | (full_df[full_df.columns[0]] == "Tie")
-    if full_df[full_df.columns[0]].dtype == "O":
-        comments = full_df[full_df.columns[0]].str.match(r"^\s*/")
-    else:
-        comments = full_df.index != full_df.index
-    full_df = full_df.loc[~line_separators & ~comments].reset_index(drop=True).copy()
-
-    cols = full_df.columns
-    for c in cols:
-        try:
-            full_df[c] = pd.to_numeric(full_df[c])
-        except:
-            pass
-    
-    for key, value in headers.items():
-        if " " in value and re.match(_RE_INTS, value):
-            headers[key] = [int(item) for item in re.split(r"\s+", value)]
-        elif " " in value and re.match(_RE_FLOATS, value):
-            headers[key] = [float(item) for item in re.split(r"\s+", value)]
-        elif value and re.match(_RE_FLOAT, value):
-            headers[key] = float(value)
-        elif re.match(_RE_INT, value):
-            headers[key] = int(value)            
-
-    alcdata = None
-    if alcfile is not None:
-        alcdata = alc.parse(alcfile, full_df.columns)
-        mapping = alcdata["mapping"].loc[alcdata["mapping"].position >= 0]
-        mapping = mapping.set_index("column")["canonical_name"].to_dict()
-        full_df = full_df.rename(columns=mapping)
-        
-    df, layer_dfs = _split_layer_columns(full_df)
-
-    headers["source"] = source
-
-    res = {"flightlines": df,
-            "layer_data": layer_dfs,
-            "model_info": headers,
-            "file_meta": {"columns": list(full_df.columns)}}
-
-    if alcdata is not None:
-        res["alc_info"] = alcdata["meta"]
-        
-    return res
-    
-def parse(nameorfile, **kw):
-    if isinstance(nameorfile, str):
-        with open(nameorfile, 'r') as f:
-            return _parse(f, source=nameorfile, **kw)
-    else:
-        return _parse(nameorfile, **kw)
-
-def _un_split_layer_columns(data):
-    data=data.copy()
-    flightlines= data['flightlines']
-    dic={}
-    for key, value in data['layer_data'].items():
-        dic[key] = value
-        dic[key].columns= [key + '_' + "{:02d}".format(col+1) for col in dic[key].columns]
-    merge_layers = pd.concat(dic.values(), axis=1)
-    merge_dfs= pd.concat((flightlines, merge_layers), axis=1)
-    return merge_dfs
-
-def _dump(data, file, alcfile=None):
-    df = _un_split_layer_columns(data)
-    for key, value in data['model_info'].items():
-        if key != 'source':
-            file.write("/" + str(key) + "\n")
-            if isinstance(value, list):
-                file.write("/" + ' '.join(str(item) for item in value) + "\n")
-            else:
-                file.write("/" + str(value) + "\n")
-    file.write('/ ')
-    df.to_csv(file, index=False, sep=' ', na_rep="*", encoding='utf-8')
-
-    if alcfile is not None:
-        alc.dump(data, alcfile, columns=df.columns)
-
-def dump(data_in, nameorfile, **kw):
-    data = copy.deepcopy(data_in)
-    if isinstance(nameorfile, str):
-        with open(nameorfile, 'w') as f:
-            return _dump(data, f, **kw)
-    else:
-        return _dump(data, nameorfile, **kw)
-
-
-
-_dump_function = dump
+from .xyzparser import dump as _dump_function
+from .xyzparser import parse
+from . import normalizer
 
 class XYZ(object):
+    """Usage:
+
+    xyz = XYZ(source, **kw)
+
+    Where source can be a filename to parse, or an already parsed
+    model dictionary (in the same format returned by xyz.to_dict()).
+
+    Where kw can be:
+
+    alcfile=filename
+      Read column mappings from filename (a .ALC file)
+    normalize=bool (default False)
+      Normalize data after reading.
+
+    Any additional arguments are sent to
+    libaarhusxyz.normalizer.normalize()
+
+    """
     def __new__(cls, *arg, **kw):
+
         normalize = kw.pop("normalize", False)
+        alcfile = kw.pop("alcfile", None)
         self = object.__new__(cls)
-        if arg or kw:
-            if arg and isinstance(arg[0], dict):
+        if arg:
+            if isinstance(arg[0], dict):
                 self.model_dict = arg[0]
             else:
-                self.model_dict = parse(*arg, **kw)
+                self.model_dict = parse(arg[0], alcfile=alcfile)
         else:
             self.model_dict = {"flightlines": pd.DataFrame(columns=["line_no", "x", "y"]),
                                "model_info": {},
                                "layer_data": {}}
         if normalize:
-            from . import normalizer
-            normalizer.normalize(self)
+            self.normalize(**kw)
         return self
 
+    def normalize(self, **kw):
+        """This function
+             * Normalizes naming and format to our internal format
+               (or one specified by naming_standard)
+             * Replaces * with NaN:s
+             * Reprojects coordinates
+               To lat/lon, web mercator and optionally to a project_crs
+             * Calculates xdist
+             * Calculate z coordinates
+             * Add missing default columns (filled with NaNs)
+        """
+        normalizer.normalize(self, **kw)
+
+    def normalize_naming(self, naming_standard="libaarhusxyz"):
+        normalizer.normalize_naming(self, naming_standard)
+    def normalize_nans(self, nan_value=None):
+        normalizer.normalize_nans(self, nan_value)
+    def normalize_projection(self):
+        normalizer.normalize_projection(self)
+    def normalize_coordinates(self, project_crs=None):
+        normalizer.normalize_coordinates(self, project_crs)
+    def normalize_dates(self):
+        normalizer.normalize_dates(self)
+    def normalize_depths(self):
+        normalizer.normalize_depths(self)
+        
+    def add_defaults(self, required_columns=None):
+        normalizer.add_defaults(self, required_columns)
+
+    def calculate_xdist(self):
+        normalizer.calculate_xdist(self)
+    def calculate_z(self):
+        normalizer.calculate_z(self)
+    def calculate_height(self):
+        normalizer.calculate_height(self)
+    def calculate_doi_layer(self):
+        normalizer.calculate_doi_layer(self)
+        
     def dump(self, *arg, **kw):
         _dump_function(self.model_dict, *arg, **kw)
 
     @property
     def title(self):
         return self.model_info.get("title", self.model_info.get("source", "Unknown"))
+        
+    @property
+    def info(self):
+        return self.model_dict["model_info"]
+    @info.setter
+    def info(self, value):
+        self.model_dict["model_info"] = value
         
     @property
     def model_info(self):
@@ -291,6 +123,12 @@ class XYZ(object):
     def flightlines(self, value):
         self.model_dict["flightlines"] = value
         
+    @property
+    def data(self):
+        return self.model_dict["layer_data"]
+    @data.setter
+    def data(self, value):
+        self.model_dict["layer_data"] = value
     @property
     def layer_data(self):
         return self.model_dict["layer_data"]
@@ -326,6 +164,12 @@ class XYZ(object):
         
     def to_dict(self):
         return self.model_dict
+
+    def get_column(self, name):
+        for col in self.flightlines.columns:
+            if normalizer.default_name_mapper(col) == name:
+                return col
+        return None
         
     def __getattr__(self, name):
         # This outer if is only here to make pickle not have a hickup
@@ -336,8 +180,12 @@ class XYZ(object):
                 return self.layer_data[name]
             if name in self.layer_params:
                 return self.layer_params[name]
-        raise AttributeError(name)
 
+            if name.endswith("_column"):
+                return self.get_column(name.split("_column")[0])
+            
+        raise AttributeError(name)
+    
     def __setattr__(self, name, value):
         if name not in ("model_dict", "model_info", "layer_data", "layer_params"):
             if name in self.model_info:
@@ -357,7 +205,7 @@ class XYZ(object):
 
     @property
     def line_id_column(self):
-        for colname in ("line_id", "line_no", "Line"):
+        for colname in ("title", "line_id", "line_no", "Line"):
             if colname in self.flightlines.columns:
                 return colname
     @property
@@ -376,28 +224,59 @@ class XYZ(object):
             if colname in self.flightlines.columns:
                 return colname
 
+    @property
+    def alt_column(self):
+        for colname in ("alt", "tx_alt"):
+            if colname in self.flightlines.columns:
+                return colname
+
     def plot_line(self, line_no, ax=None, **kw):
+        if "xdist" not in self.flightlines.columns:
+            self.calculate_xdist()
         if ax is None:
             import matplotlib.pyplot as plt
             ax = plt.gca()
         if "resistivity" in self.layer_data:
-            self._plot_line_resistivity(line_no, ax, **kw)
+            self._plot_line_altitude(line_no, ax, **kw)
+            return self._plot_line_resistivity(line_no, ax, **kw)
         elif "dbdt_ch1gt" in self.layer_data:
-            self._plot_line_raw(line_no, ax, **kw)
+            return self._plot_line_raw(line_no, ax, **kw)
         
-    def _plot_line_raw(self, line_no, ax, label="gate %(gate)i @ %(time).2e", **kw):
+    def _plot_line_raw(self, line_no, ax, channel=1, label="gate %(gate)i[%(channel)i] @ %(time).2e", **kw):
         filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
-        dbdt = self.dbdt_ch1gt.loc[filt]
-        times = self.model_info.get('gate times for channel 1', None)
+
+        if channel == 1:
+            dbdt = self.dbdt_ch1gt.loc[filt]
+            times = self.model_info.get('gate times for channel 1', None)
+        elif channel == 2:
+            dbdt = self.dbdt_ch2gt.loc[filt]
+            times = self.model_info.get('gate times for channel 1', None)
+            
         for gate in range(dbdt.shape[1]):
-            i = {"gate": gate,
-                 "time": times[gate] if times else "NaN"}
-            ax.plot(flightlines.xdist, -dbdt.values[:,gate], label=label % i, **kw)
+            if "%" in label:
+                i = {"channel": channel,
+                     "gate": gate,
+                     "time": times[gate] if times is not None else np.NaN}
+                l = label % i
+            elif gate == 0:
+                l = label
+            else:
+                l = None
+            ax.plot(flightlines.xdist, np.abs(dbdt.values[:,gate]), label=l, **kw)
         ax.set_yscale("log") 
-        ax.set_ylabel("|dBdt| (T/s)")
+        ax.set_ylabel("Channel %s |dBdt| (T/s)" % (channel,))
         ax.set_xlabel("xdist (m)")
             
+        return ax
+        
+    def _plot_line_altitude(self, line_no, ax, cmap="turbo", shading='flat', **kw):
+        if self.alt_column is None or self.z_column is None:
+            return
+        filt = self.flightlines[self.line_id_column] == line_no
+        flightlines = self.flightlines.loc[filt]
+        ax.plot(flightlines.xdist, flightlines[self.alt_column] + flightlines[self.z_column], label="Instrument position")
+        
     def _plot_line_resistivity(self, line_no, ax, cmap="turbo", shading='flat', **kw):
         filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
@@ -418,17 +297,27 @@ class XYZ(object):
         zcoords = np.concatenate((dep_top.values, dep_bot.values[:,-1:]), axis=1)
         zcoords = np.concatenate((zcoords, zcoords[-1:,:]))
 
-        data = np.log10(resistivity.values)
+        data = resistivity.values
         zcoords = zcoords[:,::-1].T
         data = data[:,::-1].T
 
-        ax.pcolor(xcoords, zcoords, data, cmap=cmap, shading=shading, **kw)
+        m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
+
+        ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
+        cax = ax_divider.append_axes("right", size="7%", pad="2%")
+        fig = plt.gcf()
+        cb = fig.colorbar(m, label="Resistivity (Ωm)", cax=cax)
+
+        return ax
         
     def plot(self, fig = None):
         if fig is None:
             import matplotlib.pyplot as plt
             fig = plt.figure()
         
+        if "xdist" not in self.flightlines.columns:
+            self.calculate_xdist()
+
         lines = self.flightlines[self.line_id_column].unique()
         w = int(np.ceil(np.sqrt(len(lines))))
         h = int(np.ceil(len(lines) / w))
@@ -440,7 +329,12 @@ class XYZ(object):
             axs = [axs]
         for line_no, ax in zip(lines, axs):
             self.plot_line(line_no, ax)
-        
+
+    def calculate_xdist(self):
+        dxdist = np.insert((  (self.flightlines[self.x_column].iloc[1:].values - self.flightlines[self.x_column].iloc[:-1].values)**2
+                            + (self.flightlines[self.y_column].iloc[1:].values - self.flightlines[self.y_column].iloc[:-1].values)**2)**0.5, 0,0)
+        self.flightlines["xdist"] = np.cumsum(dxdist)
+            
     def __repr__(self):
         max_depth = None
         if "dep_bot" in self.layer_data:
@@ -452,7 +346,7 @@ class XYZ(object):
             resistivity = repr(pd.DataFrame(self.resistivity.melt().rename(columns={"value": "Resistivity"})["Resistivity"].describe()))
             
         return "\n".join([
-            self.title,
+            self.title or "[Unnamed model]",
             "--------------------------------",
             repr(pd.DataFrame([self.model_info]).T),
             "",

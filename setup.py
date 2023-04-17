@@ -13,9 +13,13 @@ setuptools.setup(
     author_email='em@emeraldgeo.no, cch@emeraldgeo.no',
     url='https://github.com/emerald-geomodelling/libaarhusxyz',
     packages=setuptools.find_packages(),
+    include_package_data=True,
+    package_data={'libaarhusxyz': ['*.csv']},
     install_requires=[
         "numpy",
-        "pandas"
+        "pandas",
+        "pyproj",
+        "matplotlib"
     ],
     extras_require={
         'normalisation': ["pryproj", "projnames"],

@@ -2,8 +2,54 @@ import pandas as pd
 import numpy as np
 import pyproj
 import re
-import projnames
 import datetime
+import csv
+import pkg_resources
+
+def _read_csv(f):
+    return pd.read_csv(f)
+
+with pkg_resources.resource_stream("libaarhusxyz", "normalizer.csv") as f:
+    name_mapping = _read_csv(f)
+
+def complete_name_mapping(name_mapping):
+    """Fill in missing values in the name mapping using other rows in the
+    mapping."""
+    for col in name_mapping.columns:
+        if col == "libaarhusxyz": continue
+        fromfilt = ~name_mapping["alc"].isna() & ~name_mapping["libaarhusxyz"].isna()
+        mapping = name_mapping.loc[fromfilt].set_index("libaarhusxyz")["alc"]
+        tofilt = name_mapping["alc"].isna() & name_mapping.libaarhusxyz.isin(mapping.index)
+        name_mapping.loc[tofilt, "alc"] = mapping.loc[
+            name_mapping.loc[tofilt, "libaarhusxyz"]].values
+
+complete_name_mapping(name_mapping)
+    
+with pkg_resources.resource_stream("libaarhusxyz", "normalizer_pattern.csv") as f:
+    name_mapping_patterns = _read_csv(f)
+
+def map_name_pattern(value):
+    for idx, row in name_mapping_patterns.iterrows():
+        if re.match(row.pattern, value):
+            return re.sub(row.pattern, row.replacement, value)
+    return value
+    
+def get_name_mapper(naming_standard="libaarhusxyz"):
+    mapper = name_mapping.melt(naming_standard, var_name="naming_standard", value_name="src_name")
+    mapper = mapper.loc[~mapper.src_name.isna()]
+    mapper["src_name"] = mapper["src_name"].str.lower()
+    mapper = mapper.set_index("src_name")[naming_standard]
+    mapper = mapper[~mapper.index.duplicated(keep='first')]
+    mapper = mapper.loc[~pd.isnull(mapper)]
+    def mapperfn(name):
+        newname = map_name_pattern(name)
+        lnewname = newname.lower()
+        if lnewname in mapper.index:
+            newname = mapper.loc[lnewname]
+        return newname
+    return mapperfn
+
+default_name_mapper = get_name_mapper()
 
 def project(innproj, utproj, xinn, yinn):
     innproj = int(innproj)
@@ -12,71 +58,40 @@ def project(innproj, utproj, xinn, yinn):
     return pyproj.Transformer.from_crs(
         innproj, utproj, always_xy=True).transform(xinn, yinn)
 
-def normalize_headers(model):
+def normalize_headers(model, naming_standard="libaarhusxyz"):
     headers = model.model_info
-    
-    if "numlayer" in headers:
-        headers['number of layers'] = headers.pop("numlayer")
-                
+
+    mapper = get_name_mapper(naming_standard)
+    for name in list(headers.keys()):
+        headers[mapper(name)] = headers.pop(name)                
+            
     headers["inversion_type"] = None
     if 'node name(s)' in headers:
         headers["inversion_type"] = headers['node name(s)'].split("_")[0]
 
-def normalize_column_names(model):
+def normalize_column_names(model, naming_standard="libaarhusxyz"):
     df = model.flightlines
     layer_dfs = model.layer_data
     headers = model.model_info
-    
-    linenocol = "line"
-    if "line_no" in df.columns:
-        linenocol = "line_no"
+     
+    mapper = get_name_mapper(naming_standard)
+    df.columns = [mapper(name) for name in df.columns]
 
-    df = df.rename(columns={
-        linenocol:"title",
-        "elevation":"topo",
-        'doi_conservative':"doi_upper",
-        'doi_standard':"doi_lower",
-        'altitude_[m]': 'invalt',
-        'altitude_std_[fact]': 'invaltstd',
-        'altitude_a-priori_[m]': 'alt',
-        'altitude_a-priori_std_[fact]': 'altstd',
-        'segments': 'segment'
-    })
-
-    if "sigma" in layer_dfs: layer_dfs["sigma_i"] = layer_dfs.pop("sigma")
-    if "thk" in layer_dfs: layer_dfs["height"] = layer_dfs.pop("thk")
-    if "rho_i" in layer_dfs: layer_dfs["resistivity"] = layer_dfs.pop("rho_i")
-    if "rho" in layer_dfs: layer_dfs["resistivity"] = layer_dfs.pop("rho")
-    if "rho_i_std" in layer_dfs:
-        layer_dfs["resistivity_variance_factor"] = layer_dfs.pop("rho_i_std")
-    if "rho_std" in layer_dfs:
-        layer_dfs["resistivity_variance_factor"] = layer_dfs.pop("rho_std")
-
-    if 'gate times' in headers:
-        headers['gate times (s)'] = headers.pop('gate times')
+    for name in list(layer_dfs.keys()):
+        layer_dfs[mapper(name)] = layer_dfs.pop(name)
         
     model.flightlines = df
 
 def normalize_projection(model):
+    # Import here and not at top of file, as this is slow to import...
+    import projnames
+    
     headers = model.model_info
     headers["projection"] = None
     if "coordinate system" in headers:
-        match = re.match(r".*\(epsg:(.*)\).*", headers["coordinate system"])
-        if match:
-            headers["projection"] = int(match.groups()[0])
-        else:
-            name = headers["coordinate system"].lower()
-            name = name.replace("wgs84", "wgs 84")
-            ptn = re.compile(".*" + name.replace(" ", ".*") + ".*")
-            matches = [(name, value)
-                       for name, value in projnames.projections.items()
-                       if ptn.match(name.lower())]
-            if matches:
-                # NOTE: Sometimes the projection given does not
-                # specify N or S for UTM zones... We are forced to
-                # choose one here quite arbitrarily... This is why we
-                # should use EPSG codes kids!
-                headers["projection"] = matches[0][1]
+        match = projnames.search(headers["coordinate system"])
+        if match is not None:
+            headers["projection"] = match
 
 def normalize_coordinates(model, project_crs=None):
     df = model.flightlines
@@ -116,10 +131,14 @@ def calculate_xdist(model):
     df["xdist"] = df.groupby(df["title"])["prevdist"].cumsum()
     del df["prevdist"]
 
-def add_defaults(model, required_columns):
+REQUIRED_COLUMNS = ['resdata',"restotal", "numdata"]
+def add_defaults(model, required_columns=None):
     layer_dfs = model.layer_data
     df = model.flightlines
 
+    if required_columns is None:
+        required_columns = REQUIRED_COLUMNS
+    
     if "doi_lower" not in df.columns:
         df['doi_lower'] = np.full(len(df), 500, dtype=int)
 
@@ -191,17 +210,40 @@ def normalize_dates(model):
         ).drop(
             columns = ["date", "time"])
 
-def normalize(model, project_crs=None, required_columns = ['resdata',"restotal", "numdata"]):
+def normalize_nans(model, nan_value=None):
+    if nan_value is None:
+        if 'dummy' in model.model_info.keys():
+            nan_value = model.model_info['dummy']
+        else:
+            nan_value='*'
+        
+    for col in model.flightlines.columns:
+        filt=model.flightlines[col]==dummy_value
+        model.flightlines.loc[filt,col]=np.nan
+    
+    for key in model.layer_data.keys():
+        filt=model.layer_data[key]==dummy_value
+        model.layer_data[key][filt]=np.nan
+
+    # FIXME: Convert column types from O here?
+        
+def normalize_naming(model, naming_standard="libaarhusxyz"):
+    normalize_headers(model, naming_standard)
+    normalize_column_names(model, naming_standard)
+        
+def normalize(model, project_crs=None, required_columns=None, naming_standard="libaarhusxyz", nan_value=None):
     """This function
          * Normalizes naming and format to our internal format
+         * Replaces * with NaN:s
          * Reprojects coordinates
          * Calculates xdist
          * Calculate z coordinates
          * Add missing columns (filled with NaNs)
     """
 
-    normalize_headers(model)
-    normalize_column_names(model)
+    normalize_naming(model, naming_standard)
+
+    normalize_nans(model, nan_value)
     normalize_projection(model)
     normalize_coordinates(model, project_crs)
     normalize_dates(model)
