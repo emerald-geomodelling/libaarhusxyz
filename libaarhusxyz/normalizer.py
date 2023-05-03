@@ -97,6 +97,12 @@ def normalize_coordinates(model, project_crs=None):
     df = model.flightlines
     headers = model.model_info
     
+    if project_crs is None:
+        project_crs = headers["projection"]
+
+    if project_crs is None:
+        return
+
     xcol = "x"
     ycol = "y"
     if "utmx" in df.columns:
@@ -110,10 +116,7 @@ def normalize_coordinates(model, project_crs=None):
     df = df.rename(columns={
         xcol:"x_orig",
         ycol:"y_orig"})
-
-    if project_crs is None:
-        project_crs = headers["projection"]
-
+        
     df["x"], df["y"] = project(headers["projection"], project_crs, df["x_orig"].values, df["y_orig"].values)
     df["x_web"], df["y_web"] = project(headers["projection"], 3857, df["x_orig"].values, df["y_orig"].values)
     df["lon"], df["lat"] = project(headers["projection"], 4326, df["x_orig"].values, df["y_orig"].values)
@@ -218,11 +221,11 @@ def normalize_nans(model, nan_value=None):
             nan_value='*'
         
     for col in model.flightlines.columns:
-        filt=model.flightlines[col]==dummy_value
+        filt=model.flightlines[col]==nan_value
         model.flightlines.loc[filt,col]=np.nan
     
     for key in model.layer_data.keys():
-        filt=model.layer_data[key]==dummy_value
+        filt=model.layer_data[key]==nan_value
         model.layer_data[key][filt]=np.nan
 
     # FIXME: Convert column types from O here?

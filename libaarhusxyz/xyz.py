@@ -91,6 +91,10 @@ class XYZ(object):
     def dump(self, *arg, **kw):
         _dump_function(self.model_dict, *arg, **kw)
 
+    def to_vtk(self, *arg, **kw):
+        from . import vtk
+        vtk.dump(self, *arg, **kw)
+        
     @property
     def title(self):
         return self.model_info.get("title", self.model_info.get("source", "Unknown"))
