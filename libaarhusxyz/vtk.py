@@ -44,7 +44,7 @@ def _generate_cells(fl, df):
             fl.loc[mask_ln, col+'_left'] = interp_func(fl.loc[mask_ln, 'left'])
             fl.loc[mask_ln, col+'_right'] = interp_func(fl.loc[mask_ln, 'right'])
 
-    cells = df.merge(fl, on='record')
+    cells = df.merge(fl, left_on='record', right_index=True)
     cells.loc[:,'z_bot_left'] = cells.elevation_left-cells.dep_bot
     cells.loc[:,'z_bot_right'] = cells.elevation_right-cells.dep_bot
     cells.loc[:,'z_top_left'] = cells.elevation_left-cells.dep_top
@@ -110,8 +110,8 @@ def _write_vtk(point_coordinates,
 
 def _flatten_layer_data(model):
     df_list = []
-    for key, val in model['layer_data'].items():
-        df_temp = model['layer_data'][key].stack()
+    for key, val in model.layer_data.items():
+        df_temp = model.layer_data[key].stack()
         df_temp.index.rename(('record','layer'), inplace=True)
         df_temp.rename(key, inplace=True)
         df_list.append(df_temp)
@@ -132,12 +132,11 @@ def _vtk_cell_data(points_array):
 
     return point_coordinates, cell_indices_np, cells_out_vtk, cell_types_out_vtk
 
-def _dump(model, fid, attr_out = ['rho_i', 'rho_i_std','line_no', 'utmx', 'utmy','elevation','dep_top', 'dep_bot','alt', 'invalt', 'invaltstd',
-                                      'deltaalt', 'numdata', 'resdata',
-                                      'restotal', 'doi_conservative', 'doi_standard', 'xdist']):
-    fl = model["flightlines"]
-    fl['x']=fl['utmx']
-    fl['y']=fl['utmy']
+def _dump(model, fid, attr_out = ['resistivity', 'resistivity_variance_factor','line_id', 'x', 'y',
+                                  'elevation','dep_top', 'dep_bot','tx_alt', 'invalt', 'invaltstd',
+                                  'deltaalt', 'numdata', 'resdata',
+                                  'restotal', 'doi_conservative', 'doi_standard', 'xdist']):
+    fl = model.flightlines
 
     df = _flatten_layer_data(model)
 
@@ -154,9 +153,9 @@ def _dump(model, fid, attr_out = ['rho_i', 'rho_i_std','line_no', 'utmx', 'utmy'
         fid,
         attr_out)
 
-def dump(data, nameorfile, **kw):
+def dump(model, nameorfile, **kw):
     if isinstance(nameorfile, str):
         with open(nameorfile, 'w') as f:
-            return _dump(data, f, **kw)
+            return _dump(model, f, **kw)
     else:
-        return _dump(data, nameorfile, **kw)
+        return _dump(model, nameorfile, **kw)
