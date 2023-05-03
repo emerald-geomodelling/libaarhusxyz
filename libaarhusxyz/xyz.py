@@ -88,12 +88,31 @@ class XYZ(object):
     def calculate_doi_layer(self):
         normalizer.calculate_doi_layer(self)
         
-    def dump(self, *arg, **kw):
-        _dump_function(self.model_dict, *arg, **kw)
+    def dump(self, nameorfile, alcfile=None):
+        """Write to XYZ file.
 
-    def to_vtk(self, *arg, **kw):
+        nameorfile: either a file path as a string, or an open file object
+        to write this object to.
+
+        alcfile: optional file path or open file object to write a
+        Aarhus Workbench style ALC file with column mappings to.
+
+        """
+        _dump_function(self.model_dict, nameorfile, alcfile=alcfile)
+
+    def to_vtk(self, nameorfile, *arg, **kw):
+        """Write a 3d model to VTK file (only works for resistivity models,
+        not data!).
+
+        nameorfile: either a file path as a string, or an open file object
+        to write the VTK file to.
+
+        attr_out: attributes (column names in flightlines, keys in
+        layer_data) to include in output.
+        """
+
         from . import vtk
-        vtk.dump(self, *arg, **kw)
+        vtk.dump(self, nameorfile, *arg, **kw)
         
     @property
     def title(self):
@@ -235,6 +254,10 @@ class XYZ(object):
                 return colname
 
     def plot_line(self, line_no, ax=None, **kw):
+        """Plots a single flightline/cross section using matplotlib. Any extra
+        arguments are sent to `ax.plot()`.
+
+        """
         if "xdist" not in self.flightlines.columns:
             self.calculate_xdist()
         if ax is None:
@@ -315,6 +338,10 @@ class XYZ(object):
         return ax
         
     def plot(self, fig = None):
+        """Plot this object using matplotlib as a figure. To plot individual
+        flightlines / cross sections, use `plot_line(line_no)`.
+        """
+        
         if fig is None:
             import matplotlib.pyplot as plt
             fig = plt.figure()
