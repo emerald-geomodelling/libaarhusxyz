@@ -38,7 +38,22 @@ class XYZ(object):
         alcfile = kw.pop("alcfile", None)
         self = object.__new__(cls)
         if arg:
-            if isinstance(arg[0], dict):
+            if isinstance(arg[0], XYZ):
+                layer_datas = set().union(*[xyz.layer_data.keys() for xyz in arg])
+                model_info = {}
+                for xyz in reversed(arg):
+                    model_info.update(xyz.model_info)
+                
+                self.model_dict = {
+                    "flightlines": pd.concat([xyz.flightlines for xyz in arg]),
+                    "layer_data": {
+                        key: pd.concat([xyz.layer_data[key] for xyz in arg
+                                        if key in xyz.layer_data])
+                        for key in layer_datas
+                    },
+                    "model_info": model_info
+                }
+            elif isinstance(arg[0], dict):
                 self.model_dict = arg[0]
             else:
                 self.model_dict = parse(arg[0], alcfile=alcfile)
