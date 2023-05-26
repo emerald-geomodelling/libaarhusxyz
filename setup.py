@@ -5,7 +5,7 @@ import os
 
 setuptools.setup(
     name='libaarhusxyz',
-    version='0.0.7',
+    version="0.11.6",
     description='Parser for the Aarhus Workbench XYZ format for geophysical data',
     long_description="""Parser for the Aarhus Workbench XYZ format for geophysical data""",
     long_description_content_type="text/markdown",
