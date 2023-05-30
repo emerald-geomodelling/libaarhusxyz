@@ -252,6 +252,7 @@ def normalize_nans(model, nan_value=None):
 def normalize_naming(model, naming_standard="libaarhusxyz"):
     normalize_headers(model, naming_standard)
     normalize_column_names(model, naming_standard)
+    model.model_info["naming_standard"] = naming_standard
         
 def normalize(model, project_crs=None, required_columns=None, naming_standard="libaarhusxyz", nan_value=None):
     """This function
