@@ -20,8 +20,10 @@ tilt_x,anglex,TxPitch
 tilt_y,angley,TxRoll
 ,,TxRxHoriSep
 ,,TxRxVertSep
-utmx,,UTMX
-utmy,,UTMY
+x,utmx,UTMX
+y,utmy,UTMY
+lon,,
+lat,,
 ,,Current_Ch01
 ,,Current_Ch02
 dbdt_ch1gt,,Gate_Ch01

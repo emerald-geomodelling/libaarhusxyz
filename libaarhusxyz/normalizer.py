@@ -35,12 +35,20 @@ def map_name_pattern(value):
     return value
     
 def get_name_mapper(naming_standard="libaarhusxyz"):
-    mapper = name_mapping.melt(naming_standard, var_name="naming_standard", value_name="src_name")
+    mapper = name_mapping.assign(
+        **{"dst_name": name_mapping[naming_standard]})
+    mapper = mapper.melt(
+        "dst_name", var_name="naming_standard",
+        value_name="src_name")
+
     mapper = mapper.loc[~mapper.src_name.isna()]
+
+    filt = pd.isnull(mapper.dst_name)
+    mapper.loc[filt, "dst_name"] = mapper.loc[filt, "src_name"]
+
     mapper["src_name"] = mapper["src_name"].str.lower()
-    mapper = mapper.set_index("src_name")[naming_standard]
+    mapper = mapper.set_index("src_name")["dst_name"]
     mapper = mapper[~mapper.index.duplicated(keep='first')]
-    mapper = mapper.loc[~pd.isnull(mapper)]
     def mapperfn(name):
         newname = map_name_pattern(name)
         lnewname = newname.lower()
@@ -97,41 +105,52 @@ def normalize_coordinates(model, project_crs=None):
     df = model.flightlines
     headers = model.model_info
     
+    srcxcol = xcol = model.get_column("x")
+    srcycol = ycol = model.get_column("y")
+    
+    lat = model.get_column("lat")
+    lon = model.get_column("lon")
+    
+    if srcxcol is None and lat is not None:
+        # Set xcol/ycol sensible here!
+        srcxcol = lon
+        srcycol = lat
+        headers["projection"] = 4326
+
+    if srcxcol is None or xcol is None:
+        return
+        
     if project_crs is None:
         project_crs = headers["projection"]
 
     if project_crs is None:
         return
 
-    xcol = "x"
-    ycol = "y"
-    if "utmx" in df.columns:
-        xcol = "utmx"
-        ycol = "utmy"
-    if "lon" in df.columns:
-        headers["projection"] = 4326
-        xcol = "lon"
-        ycol = "lat"
-
     df = df.rename(columns={
-        xcol:"x_orig",
-        ycol:"y_orig"})
+        srcxcol:"x_orig",
+        srcycol:"y_orig"})
         
-    df["x"], df["y"] = project(headers["projection"], project_crs, df["x_orig"].values, df["y_orig"].values)
+    df[xcol], df[ycol] = project(headers["projection"], project_crs, df["x_orig"].values, df["y_orig"].values)
     df["x_web"], df["y_web"] = project(headers["projection"], 3857, df["x_orig"].values, df["y_orig"].values)
     df["lon"], df["lat"] = project(headers["projection"], 4326, df["x_orig"].values, df["y_orig"].values)
+
+    headers["projection"] = project_crs
     
     model.flightlines = df
 
 def calculate_xdist(model):
     df = model.flightlines
 
+    xcol = model.get_column("x")
+    ycol = model.get_column("y")
+    title = model.get_column("title")
+
     df["prevdist"] = np.append(
         [0],
-        np.sqrt(  (df["x"].values[1:] - df["x"].values[:-1])**2
-                + (df["y"].values[1:] - df["y"].values[:-1])**2))
-    df.loc[np.append([False], df["title"].values[1:] != df["title"].values[:-1]), "prevdist"] = 0
-    df["xdist"] = df.groupby(df["title"])["prevdist"].cumsum()
+        np.sqrt(  (df[xcol].values[1:] - df[xcol].values[:-1])**2
+                + (df[ycol].values[1:] - df[ycol].values[:-1])**2))
+    df.loc[np.append([False], df[title].values[1:] != df[title].values[:-1]), "prevdist"] = 0
+    df["xdist"] = df.groupby(df[title])["prevdist"].cumsum()
     del df["prevdist"]
 
 REQUIRED_COLUMNS = ['resdata',"restotal", "numdata"]
