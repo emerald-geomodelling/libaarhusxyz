@@ -158,6 +158,8 @@ def add_defaults(model, required_columns=None):
     layer_dfs = model.layer_data
     df = model.flightlines
 
+    if "resistivity" not in layer_dfs: return
+
     if required_columns is None:
         required_columns = REQUIRED_COLUMNS
     
