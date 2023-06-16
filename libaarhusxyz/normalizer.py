@@ -95,6 +95,8 @@ def normalize_projection(model):
     import projnames
     
     headers = model.model_info
+    if headers.get("projection") is not None:
+        return
     headers["projection"] = None
     if "coordinate system" in headers:
         match = projnames.search(headers["coordinate system"])
