@@ -264,7 +264,7 @@ class XYZ(object):
 
     @property
     def alt_column(self):
-        for colname in ("alt", "tx_alt"):
+        for colname in ("alt", "tx_alt, 'tx_altitude'"):
             if colname in self.flightlines.columns:
                 return colname
 
