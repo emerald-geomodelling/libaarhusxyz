@@ -96,6 +96,10 @@ def normalize_projection(model):
     
     headers = model.model_info
     if headers.get("projection") is not None:
+        if headers["projection"].lower() == "none":
+            headers["projection"] = None
+        else:
+            headers["projection"] = int(headers["projection"])
         return
     headers["projection"] = None
     if "coordinate system" in headers:
