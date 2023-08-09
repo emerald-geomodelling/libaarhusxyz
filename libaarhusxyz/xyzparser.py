@@ -222,7 +222,7 @@ def _dump(data, file, alcfile=None):
     for key, value in data['model_info'].items():
         if key != 'source':
             file.write(b"/" + str(key).encode('utf-8') + b"\n")
-            if isinstance(value, list):
+            if isinstance(value, (list, np.ndarray, pd.Series)):
                 file.write(b"/" + b' '.join(str(item).encode('utf-8') for item in value) + b"\n")
             else:
                 file.write(b"/" + str(value).encode('utf-8') + b"\n")
