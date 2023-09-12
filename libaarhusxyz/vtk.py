@@ -10,18 +10,18 @@ def _compute_xdist(fl):
         [0],
         np.sqrt(  (fl["x"].values[1:] - fl["x"].values[:-1])**2
                 + (fl["y"].values[1:] - fl["y"].values[:-1])**2))
-    fl.loc[np.append([False], fl["line_no"].values[1:] != fl["line_no"].values[:-1]), "prevdist"] = 0
-    fl["xdist"] = fl.groupby(fl["line_no"])["prevdist"].cumsum()
+    fl.loc[np.append([False], fl["title"].values[1:] != fl["title"].values[:-1]), "prevdist"] = 0
+    fl["xdist"] = fl.groupby(fl["title"])["prevdist"].cumsum()
 
 def _compute_sounding_widths(fl):
     #compute appropriate start and end points along line in terms of xdistance 
-    fl["next_line_no"] = fl["line_no"].shift(-1).fillna(-1)
-    fl["prev_line_no"] = fl["line_no"].shift(1).fillna(-1)
+    fl["next_title"] = fl["title"].shift(-1).fillna(-1)
+    fl["prev_title"] = fl["title"].shift(1).fillna(-1)
     fl["next_xdist"] = fl["xdist"].shift(-1).fillna(fl.iloc[-1]["xdist"])
     fl["prev_xdist"] = fl["xdist"].shift(1).fillna(0)
 
-    fl.loc[fl["line_no"] != fl["prev_line_no"], "prev_xdist"] = fl.loc[fl["line_no"] != fl["prev_line_no"], "xdist"]
-    fl.loc[fl["line_no"] != fl["next_line_no"], "next_xdist"] = fl.loc[fl["line_no"] != fl["next_line_no"], "xdist"]
+    fl.loc[fl["title"] != fl["prev_title"], "prev_xdist"] = fl.loc[fl["title"] != fl["prev_title"], "xdist"]
+    fl.loc[fl["title"] != fl["next_title"], "next_xdist"] = fl.loc[fl["title"] != fl["next_title"], "xdist"]
 
     fl.loc[fl["xdist"] - fl["prev_xdist"] > 50, "prev_xdist"] = fl.loc[fl["xdist"] - fl["prev_xdist"] > 50, "xdist"] - 50
     fl.loc[fl["next_xdist"] - fl["xdist"] > 50, "next_xdist"] = fl.loc[fl["next_xdist"] - fl["xdist"] > 50, "xdist"] + 50
@@ -31,11 +31,11 @@ def _compute_sounding_widths(fl):
 
 def _generate_cells(fl, df):
     #convert xdist along line to appropriate X, Y, and topo values 
-    line_nos = fl['line_no'].unique()
-    columns = ['x','y','elevation']
+    titles = fl['title'].unique()
+    columns = ['x','y','topo']
 
-    for ln in line_nos:
-        mask_ln = fl.line_no == ln
+    for ln in titles:
+        mask_ln = fl.title == ln
         xdist = fl.loc[mask_ln, 'xdist'].values
 
         for col in columns:
@@ -45,10 +45,10 @@ def _generate_cells(fl, df):
             fl.loc[mask_ln, col+'_right'] = interp_func(fl.loc[mask_ln, 'right'])
 
     cells = df.merge(fl, left_on='record', right_index=True)
-    cells.loc[:,'z_bot_left'] = cells.elevation_left-cells.dep_bot
-    cells.loc[:,'z_bot_right'] = cells.elevation_right-cells.dep_bot
-    cells.loc[:,'z_top_left'] = cells.elevation_left-cells.dep_top
-    cells.loc[:,'z_top_right'] = cells.elevation_right-cells.dep_top
+    cells.loc[:,'z_bot_left'] = cells.topo_left-cells.dep_bot
+    cells.loc[:,'z_bot_right'] = cells.topo_right-cells.dep_bot
+    cells.loc[:,'z_top_left'] = cells.topo_left-cells.dep_top
+    cells.loc[:,'z_top_right'] = cells.topo_right-cells.dep_top
 
     return cells
     
@@ -133,7 +133,7 @@ def _vtk_cell_data(points_array):
     return point_coordinates, cell_indices_np, cells_out_vtk, cell_types_out_vtk
 
 def _dump(model, fid, attr_out = ['resistivity', 'resistivity_variance_factor','line_id', 'x', 'y',
-                                  'elevation','dep_top', 'dep_bot','tx_alt', 'invalt', 'invaltstd',
+                                  'topo','dep_top', 'dep_bot','tx_alt', 'invalt', 'invaltstd',
                                   'deltaalt', 'numdata', 'resdata',
                                   'restotal', 'doi_conservative', 'doi_standard', 'xdist']):
     fl = model.flightlines
