@@ -132,13 +132,16 @@ def normalize_coordinates(model, project_crs=None):
     if project_crs is None:
         return
 
-    df = df.rename(columns={
-        srcxcol:"x_orig",
-        srcycol:"y_orig"})
-        
-    df[xcol], df[ycol] = project(headers["projection"], project_crs, df["x_orig"].values, df["y_orig"].values)
-    df["x_web"], df["y_web"] = project(headers["projection"], 3857, df["x_orig"].values, df["y_orig"].values)
-    df["lon"], df["lat"] = project(headers["projection"], 4326, df["x_orig"].values, df["y_orig"].values)
+    srcx = df[srcxcol].values
+    srcy = df[srcycol].values
+    
+    if "y_orig" not in df.columns:
+         df["x_orig"] = df[srcxcol]
+         df["y_orig"] = df[srcycol]
+    
+    df[xcol], df[ycol] = project(headers["projection"], project_crs, srcx, srcy)
+    df["x_web"], df["y_web"] = project(headers["projection"], 3857, srcx, srcy)
+    df["lon"], df["lat"] = project(headers["projection"], 4326, srcx, srcy)
 
     headers["projection"] = project_crs
     
