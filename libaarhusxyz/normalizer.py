@@ -252,11 +252,13 @@ def normalize_nans(model, nan_value=None):
         
     for col in model.flightlines.columns:
         filt=model.flightlines[col]==nan_value
-        model.flightlines.loc[filt,col]=np.nan
+        if filt.sum() > 0:
+            model.flightlines.loc[filt,col]=np.nan
     
     for key in model.layer_data.keys():
         filt=model.layer_data[key]==nan_value
-        model.layer_data[key][filt]=np.nan
+        if filt.values.sum() > 0:
+            model.layer_data[key][filt]=np.nan
 
     # FIXME: Convert column types from O here?
         
