@@ -4,7 +4,7 @@ import pdb
 
 
 def parse(nameorfile, xyz_columns=None):
-    df = pd.read_csv(nameorfile, sep="= *", header=None).rename(columns={0:"canonical_name", 1:"position"})
+    df = pd.read_csv(nameorfile, sep=" *= *", header=None).rename(columns={0:"canonical_name", 1:"position"})
     filt = df.canonical_name.isin(["Version", "System", "ChannelsNumber", "Dummy"])
     meta = df.loc[filt].set_index("canonical_name")["position"].to_dict()
     mapping = df.loc[~filt].astype({"position": int}).reset_index(drop=True)
