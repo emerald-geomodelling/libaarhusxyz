@@ -147,6 +147,14 @@ class XYZ(object):
         """
         _dump_function(self.model_dict, nameorfile, alcfile=alcfile)
 
+    def to_geojson(self, nameorfile, *arg, **kw):
+        from .export import geojson
+        geojson.dump(self, nameorfile, *arg, **kw)
+        
+    def to_msgpack(self, nameorfile, *arg, **kw):
+        from .export import msgpack
+        msgpack.dump(self, nameorfile, *arg, **kw)
+        
     def to_vtk(self, nameorfile, *arg, **kw):
         """Write a 3d model to VTK file (only works for resistivity models,
         not data!).
@@ -158,7 +166,7 @@ class XYZ(object):
         layer_data) to include in output.
         """
 
-        from . import vtk
+        from .export import vtk
         vtk.dump(self, nameorfile, *arg, **kw)
         
     @property
