@@ -12,6 +12,38 @@ import matplotlib.colors
 from .xyzparser import dump as _dump_function
 from .xyzparser import parse
 from . import normalizer
+import copy
+
+def diff_df(a, b):
+    difflen = min(len(a), len(b))
+    rows = np.zeros(max(len(a), len(b)), dtype=bool)
+    rows[difflen:] = True
+    cols = set()
+    for col in set(a.columns).union(b.columns):
+        if col not in a.columns or col not in b.columns:
+            rows[:] = True
+            cols.add(col)
+        else:
+            filt = ~((a.iloc[:difflen][col] == b.iloc[:difflen][col]) | (a.iloc[:difflen][col].isna() & b.iloc[:difflen][col].isna()))
+            if filt.sum() > 0:
+                cols.add(col)
+                rows = rows | filt.values
+    return rows, cols
+
+def extract_df(df, rows, cols, annotate=False):
+    cols = set(cols)
+    if len(rows) > len(df):
+        raise NotImplementedError("Can not shorten dataframes")
+    else:
+        df = df.iloc[rows]        
+    res = df[cols.intersection(df.columns)].assign(
+        **{col: np.nan
+           for col in cols if col not in df.columns})
+    if annotate:
+        res.reset_index(names="apply_idx", inplace=True)
+    else:
+        res.reset_index(drop=True, inplace=True)
+    return res
 
 class XYZ(object):
     """Usage:
@@ -406,8 +438,51 @@ class XYZ(object):
             "Layer data: %s" % (", ".join(set(self.layer_data.keys()) - set(self.layer_params.keys())),),
             "Layer params: %s" % (", ".join(self.layer_params.keys(),)),
             ])
-            
-            
+
+    def diff(self, other):
+        rows, flightlines_cols = diff_df(self.flightlines, other.flightlines)
+
+        datasets = set(self.layer_data.keys()).union(other.layer_data.keys())
+
+        layer_data = {}
+        
+        for dataset in datasets:
+            if dataset not in self.layer_data:
+                rows[:] = True
+                layer_data[dataset] = other.layer_data[dataset].columns
+            elif dataset not in other.layer_data:
+                rows[:] = True
+                layer_data[dataset] = self.layer_data[dataset].columns
+            else:
+                r, c = diff_df(self.layer_data[dataset], other.layer_data[dataset])
+                if r.sum() > 0 and len(c) > 0:
+                    rows = rows | r
+                    layer_data[dataset] = c
+                    
+        return type(self)({
+            "model_info": {"diff_a_source": self.model_info.get("source", ""), "diff_b_source": other.model_info.get("source", "")},
+            "flightlines": extract_df(other.flightlines, rows, flightlines_cols, annotate=True),
+            "layer_data": {dataset: extract_df(other.layer_data[dataset], rows, cols)
+                           for dataset, cols in layer_data.items()}
+        })
+
+    def apply_diff(self, diff):
+        res = copy.copy(self)
+
+        rows = diff.flightlines.apply_idx.values
+
+        def df_apply(df, diffdf, rows):
+            for col in diffdf.columns:
+                if col != "apply_idx":
+                    df.loc[rows, col] = diffdf[col].values
+        
+        df_apply(res.flightlines, diff.flightlines, rows)
+        
+        for dataset, datasetdiff in diff.layer_data.items():
+            df_apply(res.layer_data[dataset], datasetdiff, rows)
+
+        return res
+        
 class XYZLine(object):
     def __init__(self, model, line_id):
         self.model = model
