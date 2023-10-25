@@ -36,7 +36,7 @@ def extract_df(df, rows, cols, annotate=False):
         raise NotImplementedError("Can not shorten dataframes")
     else:
         df = df.iloc[rows]        
-    res = df[cols.intersection(df.columns)].assign(
+    res = df[list(cols.intersection(df.columns))].assign(
         **{col: np.nan
            for col in cols if col not in df.columns})
     if annotate:
