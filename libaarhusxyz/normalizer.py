@@ -233,15 +233,17 @@ def calculate_doi_layer(model):
 
 
 def normalize_dates(model):
-    if "date" in model.flightlines.columns and "time" in model.flightlines.columns:
-        datestr = model.flightlines.date.fillna("").astype(str)
-        timestr = model.flightlines.time.fillna("").astype(str)
+    datecol = model.get_column("date")
+    timecol = model.get_column("time")
+    if datecol is not None and timecol is not None:
+        datestr = model.flightlines[datecol].fillna("").astype(str)
+        timestr = model.flightlines[timecol].fillna("").astype(str)
         datetimestr = np.where(datestr != "", datestr + " " + timestr, "")
         
         model.flightlines = model.flightlines.assign(
             timestamp = pd.Series(pd.to_datetime(datetimestr) - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
         ).drop(
-            columns = ["date", "time"])
+            columns = [datecol, timecol])
 
 def normalize_nans(model, nan_value=None):
     if nan_value is None:
