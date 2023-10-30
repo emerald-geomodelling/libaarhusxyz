@@ -239,11 +239,8 @@ def normalize_dates(model):
         datestr = model.flightlines[datecol].fillna("").astype(str)
         timestr = model.flightlines[timecol].fillna("").astype(str)
         datetimestr = np.where(datestr != "", datestr + " " + timestr, "")
-        
-        model.flightlines = model.flightlines.assign(
-            timestamp = pd.Series(pd.to_datetime(datetimestr) - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
-        ).drop(
-            columns = [datecol, timecol])
+        timestampcol = model.get_column("timestamp")
+        model.flightlines[timestampcol] = pd.Series(pd.to_datetime(datetimestr) - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
 
 def normalize_nans(model, nan_value=None):
     if nan_value is None:

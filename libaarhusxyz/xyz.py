@@ -244,6 +244,9 @@ class XYZ(object):
         return self.model_dict
 
     def get_column(self, name):
+        if "naming_standard" in self.model_info:
+            return normalizer.get_name_mapper(
+                self.model_info["naming_standard"])(name)
         for col in self.flightlines.columns:
             if normalizer.default_name_mapper(col) == name:
                 return col
