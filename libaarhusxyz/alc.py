@@ -18,13 +18,18 @@ def parse(nameorfile, xyz_columns=None):
     return {"meta": meta,
             "mapping": mapping}
 
-supported_fields = ["DateTime","Date","Time","Flight","Line","GdSpeed","Alt","DEM",
-                    "Magnetic","PowerLineMonitor",
-                    "RxPitch","RxRoll","Topography","TxAltitude",
+supported_fields = ["Date","Dummy","Line",
+                    "Magnetic",
+                    "Misc1","Misc2","Misc3","Misc4",
+                    "PowerLineMonitor",
+                    "RxPitch","RxRoll",
+                    "Time",
+                    "Topography","TxAltitude",
                     "TxOffTime","TxOnTime","TxPeakTime",
-                    "TxPitch","TxRoll","TxRxHoriSep","TxRxVertSep","UTMX","UTMY",
+                    "TxPitch","TxRoll",
+                    "TxRxHoriSep","TxRxVertSep",
+                    "UTMX","UTMY",
                     "Current_Ch01","Current_Ch02",
-                    "DipoleMoment_Ch01", "DipoleMoment_Ch02",
                     "Gate_Ch01.*","Gate_Ch02.*",
                     "STD_Ch01.*","STD_Ch02.*",
                     "InUse_Ch01.*","InUse_Ch02.*"]
