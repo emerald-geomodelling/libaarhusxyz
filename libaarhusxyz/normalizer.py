@@ -113,7 +113,10 @@ def normalize_coordinates(model, project_crs=None):
     
     srcxcol = xcol = model.get_column("x")
     srcycol = ycol = model.get_column("y")
-    
+
+    if srcxcol not in df.columns: srcxcol = None
+    if srcycol not in df.columns: srcycol = None
+
     lat = model.get_column("lat")
     lon = model.get_column("lon")
     
