@@ -37,7 +37,7 @@ supported_fields = ["Date","Dummy","Line",
 
 def is_supported_field(fieldname):
     for pattern in supported_fields:
-        m = re.match(pattern, fieldname)
+        m = re.fullmatch(pattern, fieldname)
         if m: return m
     return False
 
