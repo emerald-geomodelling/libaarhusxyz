@@ -238,7 +238,7 @@ def calculate_doi_layer(model):
 def normalize_dates(model):
     datecol = model.get_column("date")
     timecol = model.get_column("time")
-    if datecol is not None and timecol is not None:
+    if datecol is not None and timecol is not None and datecol in model.flightlines.columns and timecol in model.flightlines.columns:
         datestr = model.flightlines[datecol].fillna("").astype(str)
         timestr = model.flightlines[timecol].fillna("").astype(str)
         datetimestr = np.where(datestr != "", datestr + " " + timestr, "")
