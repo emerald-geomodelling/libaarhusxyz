@@ -132,10 +132,10 @@ def _vtk_cell_data(points_array):
 
     return point_coordinates, cell_indices_np, cells_out_vtk, cell_types_out_vtk
 
-def _dump(model, fid, attr_out = ['resistivity', 'resistivity_variance_factor','line_id', 'x', 'y',
+def _dump(model, fid, attr_out = ['resistivity', 'resistivity_variance_factor','line_id','title', 'x', 'y',
                                   'topo','dep_top', 'dep_bot','tx_alt', 'invalt', 'invaltstd',
                                   'deltaalt', 'numdata', 'resdata',
-                                  'restotal', 'doi_conservative', 'doi_standard', 'xdist']):
+                                  'restotal', 'doi_upper', 'doi_lower', 'xdist']):
     fl = model.flightlines
 
     df = _flatten_layer_data(model)
