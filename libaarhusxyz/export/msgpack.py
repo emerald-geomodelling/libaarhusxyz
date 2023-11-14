@@ -38,7 +38,8 @@ def _dump(model, f, gex=None):
     data = dict(model.model_dict)
     if gex is not None:
         data["system"] = gex.gex_dict
-    data["geojson"] = geojson.to_geojson(model)    
+    if "x_web" in model.flightlines.columns:
+        data["geojson"] = geojson.to_geojson(model)    
     data = dfs2dict(data)
     msgpack.dump(data, f)
 
