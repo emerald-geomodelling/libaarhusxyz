@@ -502,7 +502,8 @@ class XYZ(object):
         def df_apply(df, diffdf, rows):
             for col in diffdf.columns:
                 if col != "apply_idx":
-                    df.loc[rows, col] = diffdf[col].values
+                    dstcol = type(df.columns[0])(col)
+                    df.loc[rows, dstcol] = diffdf[col].values
         
         df_apply(res.flightlines, diff.flightlines, rows)
         
