@@ -430,23 +430,40 @@ class XYZ(object):
             depths = self.layer_data["dep_bot"].melt()["value"]
             max_depth = depths.loc[~np.isinf(depths)].max()
 
+        layer_data_names = set(self.layer_data.keys()) - set(self.layer_params.keys())
+        layer_data = ", ".join(layer_data_names)
+
+        xyztype = ""
+        if "apply_idx" in self.flightlines.columns:
+            xyztype = " (diff)"
+            layer_data = ", ".join("%s (%s)" % (name, len(self.layer_data[name].columns)) for name in self.layer_data.keys())
+            
+        coords = ""
+        if len(self.flightlines) and self.x_column in self.flightlines.columns and self.y_column in self.flightlines.columns:            
+            coords = repr(self.flightlines[[self.x_column, self.y_column]].describe().loc[["min", "max"]])
+            
         resistivity = ""
         if "resistivity" in self.layer_data:
             resistivity = repr(pd.DataFrame(self.resistivity.melt().rename(columns={"value": "Resistivity"})["Resistivity"].describe()))
-            
+
+        linenos = "No line_id column to distinguish lines."
+        if self.line_id_column in self.flightlines.columns:
+            linenos = (len(self.flightlines[self.line_id_column].unique()),) 
+
         return "\n".join([
-            self.title or "[Unnamed model]",
+            (self.title or "[Unnamed model]") + xyztype,
             "--------------------------------",
             repr(pd.DataFrame([self.model_info]).T),
             "",
             "Soundings: %s" % (len(self.flightlines),),
-            "Flightlines: %s" % (len(self.flightlines[self.line_id_column].unique()),) if self.line_id_column in self.flightlines.columns else "No line_id column to distinguish lines.",
+            "Columns: %s" % (len(self.flightlines.columns),),
+            "Flightlines: %s" % linenos,
             "Maximum layer depth: %s" % (max_depth,),
             "Projection: %s" % self.projection,
-            repr(self.flightlines[[self.x_column, self.y_column]].describe().loc[["min", "max"]]) if len(self.flightlines) else "",
+            coords,
             resistivity,
             "",
-            "Layer data: %s" % (", ".join(set(self.layer_data.keys()) - set(self.layer_params.keys())),),
+            "Layer data: %s" % (layer_data, ),
             "Layer params: %s" % (", ".join(self.layer_params.keys(),)),
             ])
 
