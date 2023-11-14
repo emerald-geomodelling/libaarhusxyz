@@ -207,6 +207,8 @@ def parse(nameorfile, **kw):
         return _parse(nameorfile, **kw)
 
 def _un_split_layer_columns(data):
+    if len(data['layer_data']) == 0:
+        return data['flightlines']
     data=data.copy()
     flightlines= data['flightlines']
     dic={}
