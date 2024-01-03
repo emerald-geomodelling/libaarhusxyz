@@ -14,6 +14,13 @@ from .xyzparser import parse
 from . import normalizer
 import copy
 
+def df_to_dict_tree(df):
+    if (df.index.nlevels==1):
+        return df.to_dict("index")
+    return {
+        level: df_to_dict_tree(df.xs((level,)))
+        for level in df.index.levels[0]}
+
 def diff_df(a, b):
     difflen = min(len(a), len(b))
     rows = np.zeros(max(len(a), len(b)), dtype=bool)
@@ -362,7 +369,7 @@ class XYZ(object):
         flightlines = self.flightlines.loc[filt]
         ax.plot(flightlines.xdist, flightlines[self.alt_column] + flightlines[self.z_column], label="Instrument position")
         
-    def _plot_line_resistivity(self, line_no, ax, cmap="turbo", shading='flat', **kw):
+    def _plot_line_resistivity(self, line_no, ax, cax=None, cmap="turbo", shading='flat', **kw):
         filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
         resistivity = self.resistivity.loc[filt]
@@ -387,9 +394,10 @@ class XYZ(object):
         data = data[:,::-1].T
 
         m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
+        if cax is None:
+            ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
+            cax = ax_divider.append_axes("right", size="7%", pad="2%")
 
-        ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
-        cax = ax_divider.append_axes("right", size="7%", pad="2%")
         fig = plt.gcf()
         cb = fig.colorbar(m, label="Resistivity (Ωm)", cax=cax)
 
@@ -511,6 +519,18 @@ class XYZ(object):
             df_apply(res.layer_data[dataset], datasetdiff, rows)
 
         return res
+
+    @property
+    def summary(self):
+        return pd.concat([
+            self.flightlines.groupby("line").apply(lambda a: a.describe().T),    
+            self.flightlines.describe().T.reset_index(names="col").assign(line="all").set_index(["line", "col"])
+        ])
+
+    @property
+    def summary_dict(self):
+        return df_to_dict_tree(self.summary)
+
         
 class XYZLine(object):
     def __init__(self, model, line_id):
