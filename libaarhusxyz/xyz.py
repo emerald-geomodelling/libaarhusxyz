@@ -523,13 +523,13 @@ class XYZ(object):
     @property
     def summary(self):
         return pd.concat([
-            self.flightlines.groupby("line").apply(lambda a: a.describe().T),    
-            self.flightlines.describe().T.reset_index(names="col").assign(line="all").set_index(["line", "col"])
+            self.flightlines.groupby(self.line_id_column).apply(lambda a: a.describe().T),    
+            self.flightlines.describe().T.reset_index(names="col").assign(**{self.line_id_column:"all"}).set_index([self.line_id_column, "col"])
         ])
 
     @property
     def summary_dict(self):
-        return df_to_dict_tree(self.summary)
+        return df_to_dict_tree(self.summary.fillna(np.nan).replace([np.nan], [None]))
 
         
 class XYZLine(object):
