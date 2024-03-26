@@ -1,4 +1,4 @@
-import pandas as pd
+cimport pandas as pd
 import numpy as np
 try:
     import projnames
@@ -293,28 +293,28 @@ class XYZ(object):
 
     @property
     def line_id_column(self):
-        for colname in ("title", "line_id", "line_no", "Line"):
+        for colname in ("title", "Line", "line", "line_id", "line_no"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def x_column(self):
-        for colname in ("x", "utmx", "lon", "lng", "UTMX"):
+        for colname in ("x", "UTMX", "utmx", "lon", "lng"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def y_column(self):
-        for colname in ("y", "utmy", "lat", "UTMY"):
+        for colname in ("y", "UTMY", "utmy", "lat"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def z_column(self):
-        for colname in ("elevation", "topo", "Topography"):
+        for colname in ("Topography", "topo", "elevation"):
             if colname in self.flightlines.columns:
                 return colname
 
     @property
     def alt_column(self):
-        for colname in ("alt", "tx_alt", "tx_altitude"):
+        for colname in ("tx_altitude", "TxAltitude", "tx_alt", "alt"): # This is according to alc - file
             if colname in self.flightlines.columns:
                 return colname
 
