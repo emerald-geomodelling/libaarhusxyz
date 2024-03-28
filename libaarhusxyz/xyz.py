@@ -393,7 +393,10 @@ class XYZ(object):
         zcoords = zcoords[:,::-1].T
         data = data[:,::-1].T
 
-        m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
+        if 'clim' in locals():
+            m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(vmin=clim[0], vmax=clim[1], clip=True), shading=shading, **kw)
+        else:
+            m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
         if cax is None:
             ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
             cax = ax_divider.append_axes("right", size="7%", pad="2%")
