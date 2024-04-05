@@ -136,6 +136,16 @@ def _dump(model, fid, attr_out = ['resistivity', 'resistivity_variance_factor','
                                   'topo','dep_top', 'dep_bot','tx_alt', 'invalt', 'invaltstd',
                                   'deltaalt', 'numdata', 'resdata',
                                   'restotal', 'doi_upper', 'doi_lower', 'xdist']):
+    if np.isinf(model.layer_data["dep_bot"].iloc[:,-1].max()):
+        # normalise=True can create "inf" in last dep_bot layer, which breaks VTK export
+        # falsify last layer depth which was inf, with the 2nd last real layer depth + the difference between the last two real layer_depths
+        print("WARNING: Last model.layer_data[dep_bot] contains inf values, " \
+                                                      "falsifying the last dep_bot value." \
+                                                      "See .export.vtk._dump for more details")
+        last_layer_val = model.layer_data["dep_bot"].iloc[:, -2][0] + (model.layer_data["dep_bot"].iloc[:, -2][0]
+                                                                       -model.layer_data["dep_bot"].iloc[:, -3][0])
+        model.layer_data["dep_bot"] = model.layer_data["dep_bot"].replace([np.inf, -np.inf, np.nan], last_layer_val)
+
     fl = model.flightlines
 
     df = _flatten_layer_data(model)

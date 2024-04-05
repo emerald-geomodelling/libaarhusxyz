@@ -14,6 +14,13 @@ from .xyzparser import parse
 from . import normalizer
 import copy
 
+def df_to_dict_tree(df):
+    if (df.index.nlevels==1):
+        return df.to_dict("index")
+    return {
+        level: df_to_dict_tree(df.xs((level,)))
+        for level in df.index.levels[0]}
+
 def diff_df(a, b):
     difflen = min(len(a), len(b))
     rows = np.zeros(max(len(a), len(b)), dtype=bool)
@@ -286,28 +293,28 @@ class XYZ(object):
 
     @property
     def line_id_column(self):
-        for colname in ("title", "line_id", "line_no", "Line"):
+        for colname in ("title", "Line", "line", "line_id", "line_no"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def x_column(self):
-        for colname in ("x", "utmx", "lon", "lng", "UTMX"):
+        for colname in ("x", "UTMX", "utmx", "lon", "lng"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def y_column(self):
-        for colname in ("y", "utmy", "lat", "UTMY"):
+        for colname in ("y", "UTMY", "utmy", "lat"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def z_column(self):
-        for colname in ("elevation", "topo", "Topography"):
+        for colname in ("Topography", "topo", "elevation"):
             if colname in self.flightlines.columns:
                 return colname
 
     @property
     def alt_column(self):
-        for colname in ("alt", "tx_alt", "tx_altitude"):
+        for colname in ("tx_altitude", "TxAltitude", "tx_alt", "alt"): # This is according to alc - file
             if colname in self.flightlines.columns:
                 return colname
 
@@ -516,6 +523,18 @@ class XYZ(object):
                 df_apply(res.layer_data[dataset], datasetdiff, rows)
 
         return res
+
+    @property
+    def summary(self):
+        return pd.concat([
+            self.flightlines.groupby(self.line_id_column).apply(lambda a: a.describe().T),    
+            self.flightlines.describe().T.reset_index(names="col").assign(**{self.line_id_column:"all"}).set_index([self.line_id_column, "col"])
+        ])
+
+    @property
+    def summary_dict(self):
+        return df_to_dict_tree(self.summary.fillna(np.nan).replace([np.nan], [None]))
+
         
 class XYZLine(object):
     def __init__(self, model, line_id):

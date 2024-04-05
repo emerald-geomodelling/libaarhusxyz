@@ -156,9 +156,20 @@ class GEX(object):
 
     def gate_times(self, channel='Channel1'):
         gex = self.gex_dict
-        no_gates = int(gex[channel]['NoGates'])
+        
+        moment_name = gex[channel].get("TransmitterMoment", "")
+        
+        if "GateTime" + moment_name in gex['General']:
+            gate_time_array = gex['General']['GateTime' + moment_name]
+        elif "GateTime" in gex['General']:
+            gate_time_array = gex['General']['GateTime']
+        else:
+            assert False, "Unable to find General.GateTime or General.GateTime[Moment] in GEX"
+
         remove_gates_from = int(gex[channel].get('RemoveGatesFrom', 0))
-        return gex['General']['GateTime'][remove_gates_from:no_gates,:] + gex[channel]['GateTimeShift'] + gex[channel].get('MeaTimeDelay', 0.0)
+        no_gates = int(gex[channel].get('NoGates', len(gate_time_array)))
+            
+        return gate_time_array[remove_gates_from:no_gates,:] + gex[channel].get('GateTimeShift', 0.0) + gex[channel].get('MeaTimeDelay', 0.0)
 
     def __getattr__(self, name):
         return self.gex_dict[name]
