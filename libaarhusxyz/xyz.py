@@ -362,7 +362,7 @@ class XYZ(object):
         flightlines = self.flightlines.loc[filt]
         ax.plot(flightlines.xdist, flightlines[self.alt_column] + flightlines[self.z_column], label="Instrument position")
         
-    def _plot_line_resistivity(self, line_no, ax, cmap="turbo", shading='flat', **kw):
+    def _plot_line_resistivity(self, line_no, ax, cax=None, cmap="turbo", shading='flat', **kw):
         filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
         resistivity = self.resistivity.loc[filt]
@@ -387,9 +387,10 @@ class XYZ(object):
         data = data[:,::-1].T
 
         m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
+        if cax is None:
+            ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
+            cax = ax_divider.append_axes("right", size="7%", pad="2%")
 
-        ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
-        cax = ax_divider.append_axes("right", size="7%", pad="2%")
         fig = plt.gcf()
         cb = fig.colorbar(m, label="Resistivity (Ωm)", cax=cax)
 
@@ -490,7 +491,7 @@ class XYZ(object):
         return type(self)({
             "model_info": {"diff_a_source": self.model_info.get("source", ""), "diff_b_source": other.model_info.get("source", "")},
             "flightlines": extract_df(other.flightlines, rows, flightlines_cols, annotate=True),
-            "layer_data": {dataset: extract_df(other.layer_data[dataset], rows, cols)
+            "layer_data": {dataset: extract_df(other.layer_data[dataset], rows, cols) if dataset in other.layer_data else None
                            for dataset, cols in layer_data.items()}
         })
 
@@ -508,7 +509,11 @@ class XYZ(object):
         df_apply(res.flightlines, diff.flightlines, rows)
         
         for dataset, datasetdiff in diff.layer_data.items():
-            df_apply(res.layer_data[dataset], datasetdiff, rows)
+            if datasetdiff is None:
+                if dataset in res.layer_data:
+                    del res.layer_data[dataset]
+            else:
+                df_apply(res.layer_data[dataset], datasetdiff, rows)
 
         return res
         
