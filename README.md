@@ -25,4 +25,10 @@ can e.g. be read in a web browser, and also removes the issue with numerical pre
 in text format to/from float conversion. There's a [javascript companion library](https://github.com/emerald-geomodelling/libaarhusxyz-js)
 for working with this format in the browser.
 
+## Examples
 For usage details, see [Example usage notebook](docs/Example%20usage.ipynb).
+
+## Other tools
+We have developed interface code for SimPEG to work directly with measured data from SkyTEM systems
+(Tested with 304 and 306) in XYZ format using libaarhusxyz. Example notebooks can be found
+[here](https://github.com/emerald-geomodelling/experimental-simpeg-ext/).
