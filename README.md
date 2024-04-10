@@ -29,6 +29,6 @@ for working with this format in the browser.
 For usage details, see [Example usage notebook](docs/Example%20usage.ipynb).
 
 ## Other tools
-We have developed interface code for SimPEG to work directly with measured data from SkyTEM systems
+We have developed interface code for the [SimPEG](https://simpeg.xyz/) inversion software to work directly with measured data from SkyTEM systems
 (Tested with 304 and 306) in XYZ format using libaarhusxyz. Example notebooks can be found
 [here](https://github.com/emerald-geomodelling/experimental-simpeg-ext/).
