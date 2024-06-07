@@ -127,6 +127,10 @@ class XYZ(object):
         normalizer.normalize_coordinates(self, project_crs)
     def normalize_dates(self):
         normalizer.normalize_dates(self)
+
+    def normalize_sort_datetime(self):
+        normalizer.normalize_sort_datetime(self)
+
     def normalize_depths(self):
         normalizer.normalize_depths(self)
         
