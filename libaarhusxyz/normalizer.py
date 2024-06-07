@@ -245,6 +245,17 @@ def normalize_dates(model):
         timestampcol = model.get_column("timestamp")
         model.flightlines[timestampcol] = pd.Series(pd.to_datetime(datetimestr) - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
 
+
+def normalize_sort_datetime(model):
+    already_sorted = ((model.flightlines.timestamp[1:].values - model.flightlines.timestamp[:-1].values) < 0).max()
+    if already_sorted:
+        model.flightlines.sort_values(by='timestamp', inplace=True)
+        indexer = model.flightlines.index
+        model.flightlines.reset_index(drop=True, inplace=True)
+        for key in model.layer_data.keys():
+            model.layer_data[key] = model.layer_data[key].reindex(index=indexer)
+            model.layer_data[key].reset_index(drop=True, inplace=True)
+
 def normalize_nans(model, nan_value=None):
     if nan_value is None:
         if 'dummy' in model.model_info.keys():
@@ -285,7 +296,8 @@ def normalize(model, project_crs=None, required_columns=None, naming_standard="l
     normalize_projection(model)
     normalize_coordinates(model, project_crs)
     normalize_dates(model)
-    
+    normalize_sort_datetime(model)
+
     calculate_xdist(model)
     add_defaults(model, required_columns)
     normalize_depths(model)
