@@ -248,8 +248,8 @@ def normalize_dates(model):
 
 def normalize_sort_datetime(model):
     timestampcol = model.get_column("timestamp")
-    sorttest = ((model.flightlines[timestampcol][1:].values - model.flightlines[timestampcol][:-1].values) < 0).max()
-    if sorttest:
+    already_sorted = ((model.flightlines[timestampcol][1:].values - model.flightlines[timestampcol][:-1].values) < 0).max()
+    if already_sorted:
         model.flightlines.sort_values(by=timestampcol, inplace=True)
         indexer = model.flightlines.index
         model.flightlines.reset_index(drop=True, inplace=True)
