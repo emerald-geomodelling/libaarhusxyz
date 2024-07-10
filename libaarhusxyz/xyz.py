@@ -148,6 +148,7 @@ class XYZ(object):
     def add_defaults(self, required_columns=None):
         normalizer.add_defaults(self, required_columns)
 
+    # FIXME: Which function for 'calculate_xdist'?!? the one on 152 or 451?!?
     def calculate_xdist(self):
         normalizer.calculate_xdist(self)
     def calculate_z(self):
@@ -446,10 +447,11 @@ class XYZ(object):
         for line_no, ax in zip(lines, axs):
             self.plot_line(line_no, ax)
 
-    def calculate_xdist(self):
-        dxdist = np.insert((  (self.flightlines[self.x_column].iloc[1:].values - self.flightlines[self.x_column].iloc[:-1].values)**2
-                            + (self.flightlines[self.y_column].iloc[1:].values - self.flightlines[self.y_column].iloc[:-1].values)**2)**0.5, 0,0)
-        self.flightlines["xdist"] = np.cumsum(dxdist)
+    # FIXME: Which function for 'calculate_xdist'?!? the one on 152 or 451?!?
+    # def calculate_xdist(self):
+    #     dxdist = np.insert((  (self.flightlines[self.x_column].iloc[1:].values - self.flightlines[self.x_column].iloc[:-1].values)**2
+    #                         + (self.flightlines[self.y_column].iloc[1:].values - self.flightlines[self.y_column].iloc[:-1].values)**2)**0.5, 0,0)
+    #     self.flightlines["xdist"] = np.cumsum(dxdist)
             
     def __repr__(self):
         max_depth = None
@@ -554,12 +556,11 @@ class XYZ(object):
     def summary_dict(self):
         return df_to_dict_tree(self.summary.fillna(np.nan).replace([np.nan], [None]))
 
-    def split_by_line(self):
+    def split_by_flightline(self):
         self.flightlines['apply_idx'] = self.flightlines.index
         flines_list = sorted(self.flightlines.Line.unique())
         xyz_dict = {}
         for fline in flines_list:
-            filt = self.flightlines.Line == fline
             not_filt = self.flightlines.Line != fline
             temp_xyz = copy.deepcopy(self)
             for ld_key in temp_xyz.layer_data.keys():
