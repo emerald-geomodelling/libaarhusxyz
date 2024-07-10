@@ -139,6 +139,10 @@ class XYZ(object):
         normalizer.normalize_coordinates(self, project_crs)
     def normalize_dates(self):
         normalizer.normalize_dates(self)
+
+    def normalize_sort_datetime(self):
+        normalizer.normalize_sort_datetime(self)
+
     def normalize_depths(self):
         normalizer.normalize_depths(self)
         
@@ -381,7 +385,7 @@ class XYZ(object):
         flightlines = self.flightlines.loc[filt]
         ax.plot(flightlines.xdist, flightlines[self.alt_column] + flightlines[self.z_column], label="Instrument position")
         
-    def _plot_line_resistivity(self, line_no, ax, cax=None, cmap="turbo", shading='flat', **kw):
+    def _plot_line_resistivity(self, line_no, ax, cax=None, norm=None, cmin=None, cmax=None, cmap="turbo", shading='flat', **kw):
         filt = self.flightlines[self.line_id_column] == line_no
         flightlines = self.flightlines.loc[filt]
         resistivity = self.resistivity.loc[filt]
@@ -405,7 +409,11 @@ class XYZ(object):
         zcoords = zcoords[:,::-1].T
         data = data[:,::-1].T
 
-        m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=matplotlib.colors.LogNorm(), shading=shading, **kw)
+        if norm is None:
+            norm = matplotlib.colors.LogNorm(vmin=cmin, vmax=cmax, clip=True)
+
+        m = ax.pcolor(xcoords, zcoords, data, cmap=cmap, norm=norm, shading=shading, **kw)
+
         if cax is None:
             ax_divider = mpl_toolkits.axes_grid1.axes_divider.make_axes_locatable(ax)
             cax = ax_divider.append_axes("right", size="7%", pad="2%")
