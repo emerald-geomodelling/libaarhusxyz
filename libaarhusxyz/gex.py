@@ -171,8 +171,8 @@ class GEX(object):
             
         return gate_time_array[remove_gates_from:remove_gates_from+no_gates,:] + gex[channel].get('GateTimeShift', 0.0) + gex[channel].get('MeaTimeDelay', 0.0)
 
-    def __getattr__(self, name):
-        return self.gex_dict[name]
+    # def __getattr__(self, name):
+    #     return self.gex_dict[name]
 
     def plot(self, ax=None):
         if ax is None:
