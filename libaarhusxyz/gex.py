@@ -65,7 +65,7 @@ def _parse(inputfile):
     gex={"header":sections["header"]}
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
-        print("header {} parsed".format(header))
+        print(f"    - header {header} parsed")
     
     for channel in ["Channel1", "Channel2"]:
         if channel in gex.keys():
