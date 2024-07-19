@@ -27,7 +27,7 @@ def dfs2dict(d):
 
 def dict2dfs(d):
     if isinstance(d, dict):
-        if min([isinstance(col, np.ndarray) for col in d.values()]):
+        if d and min([isinstance(col, np.ndarray) for col in d.values()]):
             return pd.DataFrame(d)
         else:
             return {key: dict2dfs(value) for key, value in d.items()}
