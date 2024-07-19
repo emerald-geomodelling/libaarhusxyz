@@ -52,6 +52,18 @@ def extract_df(df, rows, cols, annotate=False):
         res.reset_index(drop=True, inplace=True)
     return res
 
+def df_apply(df, diffdf, rows, dummy_value = None):
+    for col in diffdf.columns:
+        if col != "apply_idx":
+            dstcol = type(df.columns[0])(col)
+            values = diffdf[col].values
+            if dummy_value is not None:
+                if pd.isna(dummy_value):
+                    values = np.where(pd.isna(diffdf[col].values), df.loc[rows, dstcol].values, values)
+                else:
+                    values = np.where(diffdf[col].values == dummy_value, df.loc[rows, dstcol].values, values)
+            df.loc[rows, dstcol] = values
+
 class XYZ(object):
     """Usage:
 
@@ -528,20 +540,16 @@ class XYZ(object):
 
         rows = diff.flightlines.apply_idx.values
 
-        def df_apply(df, diffdf, rows):
-            for col in diffdf.columns:
-                if col != "apply_idx":
-                    dstcol = type(df.columns[0])(col)
-                    df.loc[rows, dstcol] = diffdf[col].values
+        dummy_value = diff.model_info.get("diff_dummy", None)
         
-        df_apply(res.flightlines, diff.flightlines, rows)
+        df_apply(res.flightlines, diff.flightlines, rows, dummy_value = dummy_value)
         
         for dataset, datasetdiff in diff.layer_data.items():
             if datasetdiff is None:
                 if dataset in res.layer_data:
                     del res.layer_data[dataset]
             else:
-                df_apply(res.layer_data[dataset], datasetdiff, rows)
+                df_apply(res.layer_data[dataset], datasetdiff, rows, dummy_value = dummy_value)
 
         return res
 
