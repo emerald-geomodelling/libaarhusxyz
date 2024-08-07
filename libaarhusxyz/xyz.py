@@ -567,15 +567,15 @@ class XYZ(object):
         flines_list = sorted(self.flightlines.Line.unique())
         xyz_dict = {}
         for fline in flines_list:
-            filt = self.flightlines.Line == fline
             not_filt = self.flightlines.Line != fline
             temp_xyz = copy.deepcopy(self)
             for ld_key in temp_xyz.layer_data.keys():
-                temp_xyz.layer_data[ld_key].drop(index=not_filt, inplace=True).reset_index(drop=True, inplace=True)
-            temp_xyz.flightlines.drop(index=not_filt, inplace=True).reset_index(drop=True, inplace=True)
+                temp_xyz.layer_data[ld_key].drop(index=self.flightlines.Line[not_filt].index, inplace=True)
+                temp_xyz.layer_data[ld_key].reset_index(drop=True, inplace=True)
+            temp_xyz.flightlines.drop(index=self.flightlines.Line[not_filt].index, inplace=True)
+            temp_xyz.flightlines.reset_index(drop=True, inplace=True)
             xyz_dict[f"{fline}_xyz"] = temp_xyz
         return xyz_dict
-
 
 class XYZLine(object):
     def __init__(self, model, line_id):
