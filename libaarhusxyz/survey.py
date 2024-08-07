@@ -1,5 +1,9 @@
 from . import xyz as xyzmod
 from . import gex as gexmod
+try:
+    import yaml
+except:
+    pass
 
 class Survey(object):
     def __init__(self, xyz, gex, *arg, **kw):
