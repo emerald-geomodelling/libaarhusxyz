@@ -16,6 +16,9 @@ class Survey(object):
                 msgpackfile,
                 gex = self.gex)
         if summaryfile:
-            with open(summaryfile, "w") as f:
-                yaml.dump(xyz.summary_dict, f)
+            if hasattr(summaryfile, "write"):
+                yaml.dump(xyz.summary_dict, summaryfile)
+            else:
+                with open(summaryfile, "w") as f:
+                    yaml.dump(xyz.summary_dict, f)
                     
