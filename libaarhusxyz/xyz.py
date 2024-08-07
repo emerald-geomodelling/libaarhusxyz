@@ -87,6 +87,7 @@ class XYZ(object):
 
         normalize = kw.pop("normalize", False)
         alcfile = kw.pop("alcfile", None)
+        drop_apply_idx = kw.pop("drop_apply_idx", True)
         self = object.__new__(cls)
         if arg:
             if isinstance(arg[0], XYZ):
@@ -106,14 +107,14 @@ class XYZ(object):
                 }
 
                 if "apply_idx" in self.flightlines.columns:
-                    apply_idx = self.flightlines.columns.apply_idx.to_list()
-                    assert len(np.unique(np.diff(sorted(apply_idx)))) == 1, f"¡¡¡The 'apply_idx' column in the xyz files contains values that are not monotonically increasing!!!"
-                    for ld_key in self.layer_data.keys():
-                        self.layer_data[ld_key]['apply_idx'] = apply_idx
-                        self.layer_data[ld_key].sort_values(by=['apply_idx'], inplace=True, ignore_index=True)
-                        self.layer_data[ld_key].drop(columns='apply_idx', inplace=True)
-                    self.flightlines.sort_values(by=["apply_idx"], inplace=True, ignore_index=True)
-                    self.flightlines.drop(columns='apply_idx', inplace=True)
+                    
+                    apply_idx = self.flightlines.apply_idx
+                    ordering = apply_idx.argsort()
+                    self.layer_data = {ld_key: self.layer_data[ld_key].iloc[ordering].reset_index(drop=True)
+                                       for ld_key in self.layer_data.keys()}
+                    self.flightlines = self.flightlines.iloc[ordering].reset_index(drop=True)
+                    if drop_apply_idx:
+                        self.flightlines = self.flightlines.drop(columns='apply_idx')
 
             elif isinstance(arg[0], dict):
                 self.model_dict = arg[0]
@@ -564,18 +565,21 @@ class XYZ(object):
 
     def split_by_line(self):
         self.flightlines['apply_idx'] = self.flightlines.index
-        flines_list = sorted(self.flightlines.Line.unique())
+        flines_list = sorted(self.flightlines[self.line_id_column].unique())
         xyz_dict = {}
         for fline in flines_list:
-            filt = self.flightlines.Line == fline
-            not_filt = self.flightlines.Line != fline
-            temp_xyz = copy.deepcopy(self)
-            for ld_key in temp_xyz.layer_data.keys():
-                temp_xyz.layer_data[ld_key].drop(index=not_filt, inplace=True).reset_index(drop=True, inplace=True)
-            temp_xyz.flightlines.drop(index=not_filt, inplace=True).reset_index(drop=True, inplace=True)
-            xyz_dict[f"{fline}_xyz"] = temp_xyz
+            filt = self.flightlines[self.line_id_column] == fline
+            line_xyz = type(self)(self)
+            line_xyz.layer_data = {
+                ld_key: line_xyz.layer_data[ld_key].loc[filt].reset_index(drop=True)
+                for ld_key in line_xyz.layer_data.keys()}
+            line_xyz.flightlines = line_xyz.flightlines.loc[filt]
+            if "apply_idx" in line_xyz.flightlines.columns:
+                line_xyz.flightlines = line_xyz.flightlines.reset_index(drop=True)
+            else:
+                line_xyz.flightlines = line_xyz.flightlines.reset_index(names="apply_idx")
+            xyz_dict[fline] = line_xyz
         return xyz_dict
-
 
 class XYZLine(object):
     def __init__(self, model, line_id):
