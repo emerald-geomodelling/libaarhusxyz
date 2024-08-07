@@ -21,8 +21,8 @@ class Survey(object):
                 gex = self.gex)
         if summaryfile:
             if hasattr(summaryfile, "write"):
-                yaml.dump(xyz.summary_dict, summaryfile)
+                yaml.dump(self.xyz.summary_dict, summaryfile)
             else:
                 with open(summaryfile, "w") as f:
-                    yaml.dump(xyz.summary_dict, f)
+                    yaml.dump(self.xyz.summary_dict, f)
                     
