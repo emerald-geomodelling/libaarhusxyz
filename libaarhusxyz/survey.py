@@ -8,6 +8,14 @@ class Survey(object):
         self.xyz = xyz
         self.gex = gex
 
-    def dump(self, xyzfile=None, gexfile=None, alcfile=None):
+    def dump(self, xyzfile=None, gexfile=None, alcfile=None, msgpackfile=None, summaryfile=None):
         if xyzfile: self.xyz.dump(xyzfile, alcfile=alcfile)
         if gexfile: self.gex.dump(gexfile)
+        if msgpackfile:
+            self.xyz.to_msgpack(
+                msgpackfile,
+                gex = self.gex)
+        if summaryfile:
+            with open(summaryfile, "w") as f:
+                yaml.dump(xyz.summary_dict, f)
+                    
