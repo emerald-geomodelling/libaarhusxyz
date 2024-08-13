@@ -134,11 +134,11 @@ def _dump(gex, f, columns=None):
                 lines.append('{0}={1}'.format(key2, a))
     
     for line in lines:
-        f.write('{0}\n'.format(line))
+        f.write(('{0}\n'.format(line)).encode("utf-8"))
 
 def dump(gex, nameorfile, **kw):
     if isinstance(nameorfile, str):
-        with open(nameorfile, 'w') as f:
+        with open(nameorfile, 'wb') as f:
             return _dump(gex, f, **kw)
     else:
         return _dump(gex, nameorfile, **kw)
