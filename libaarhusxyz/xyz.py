@@ -46,7 +46,9 @@ def extract_df(df, rows, cols, annotate=False):
     res = df[list(cols.intersection(df.columns))].assign(
         **{col: np.nan
            for col in cols if col not in df.columns})
-    if annotate and "apply_idx" not in res.columns:
+    if annotate:
+        if "apply_idx" in res.columns:
+            res.drop('apply_idx', axis=1, inplace=True)
         res.reset_index(names="apply_idx", inplace=True)
     else:
         res.reset_index(drop=True, inplace=True)
