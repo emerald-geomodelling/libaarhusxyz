@@ -14,7 +14,7 @@ class Survey(object):
         self.orig_xyz = orig_xyz
         self.gex = gex
 
-    def dump(self, xyzfile=None, gexfile=None, alcfile=None, msgpackfile=None, diffmsgpackfile=None, summaryfile=None):
+    def dump(self, xyzfile=None, gexfile=None, alcfile=None, msgpackfile=None, diffmsgpackfile=None, summaryfile=None, geojsonfile=None, simplify=10):
         if xyzfile: self.xyz.dump(xyzfile, alcfile=alcfile)
         if gexfile: self.gex.dump(gexfile)
         if msgpackfile:
@@ -29,4 +29,5 @@ class Survey(object):
             else:
                 with open(summaryfile, "wb") as f:
                     yaml.dump(self.xyz.summary_dict, codecs.getwriter("utf-8")(f))
-                    
+        if geojsonfile:
+            self.xyz.to_geojson(geojsonfile, simplify=simplify)
