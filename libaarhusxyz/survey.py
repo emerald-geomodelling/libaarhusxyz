@@ -15,6 +15,8 @@ class Survey(object):
         self.gex = gex
 
     def dump(self, xyzfile=None, gexfile=None, alcfile=None, msgpackfile=None, diffmsgpackfile=None, summaryfile=None, geojsonfile=None, simplify=10):
+        # FIXME: fill in documentation here 
+        # if 'simplify' is none all points make the line in geojson, otherwise it's a tolerance in meters
         if xyzfile: self.xyz.dump(xyzfile, alcfile=alcfile)
         if gexfile: self.gex.dump(gexfile)
         if msgpackfile:
