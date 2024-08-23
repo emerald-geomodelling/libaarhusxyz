@@ -43,8 +43,9 @@ class Survey(object):
         geojsonfile :
             If not None, filepath to write the geojsonfile
         simplify :
+            Only applies to the geojsonfile.
             Simplifies filightlines by removing relatively extraneous vertices while preserving essential shape within {simplify} m.
-              If simplify == 0, no simplification will occur
+            If simplify == 0, no simplification will occur
         """
         if xyzfile: self.xyz.dump(xyzfile, alcfile=alcfile)
         if gexfile: self.gex.dump(gexfile)
