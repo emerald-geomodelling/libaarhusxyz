@@ -171,13 +171,31 @@ class GEX(object):
             
         return gate_time_array[remove_gates_from:remove_gates_from+no_gates,:] + gex[channel].get('GateTimeShift', 0.0) + gex[channel].get('MeaTimeDelay', 0.0)
 
-    # @property
-    # def tx_orientation(self):
-    #     return self.gex_dict...
-    
-    # @property
-    # def rx_orientation(self):
-    #     return self.gex_dict...
+    @property
+    def tx_orientation(self):
+        looptype = gex.gex_dict['General']['LoopType']
+        # See the aarhusinv manual for looptype definitions:
+        # https://hgg.au.dk/fileadmin/HGGfiles/Software/AarhusInv/AarhusInv_manual_8.pdf
+        # pg 49. section 6.1 "line 2, first integer source type"
+        if looptype == 72:
+            tx_orient = 'z'
+        else:
+            print(f"********************")
+            print(f"*")
+            print(f"* Unknown loop-type {looptype}.")
+            print(f"*   Please see https://hgg.au.dk/fileadmin/HGGfiles/Software/AarhusInv/AarhusInv_manual_8.pdf , pg 49. section 6.1 'Line 2, first integer source type'")
+            print(f"*")
+            print(f"* Assuming TX-orientation is 'Z'")
+            print(f"*")
+            print(f"********************")
+            tx_orient = 'z'
+        return tx_orient
+
+    @property
+    def rx_orientation(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        rx_orient = (gex.gex_dict[ch_key]['ReceiverPolarizationXYZ']).lower()
+        return rx_orient
 
     def __getattr__(self, name):
         return self.gex_dict[name]
