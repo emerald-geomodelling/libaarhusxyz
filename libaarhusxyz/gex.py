@@ -191,11 +191,27 @@ class GEX(object):
             tx_orient = 'z'
         return tx_orient
 
+    # FIXME!!! can a property have a channel input?
     @property
     def rx_orientation(self, channel: int = 1):
         ch_key = f"Channel{channel}"
-        rx_orient = (gex.gex_dict[ch_key]['ReceiverPolarizationXYZ']).lower()
-        return rx_orient
+        return (gex.gex_dict[ch_key]['ReceiverPolarizationXYZ']).lower()
+
+    @property
+    def UniformDataSTD(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return gex.gex_dict[ch_key]['UniformDataSTD']
+
+    @property
+    def NoGates(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return gex.gex_dict[ch_key]['NoGates']
+
+    @property
+    def RemoveInitialGates(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return gex.gex_dict[ch_key]['RemoveInitialGates']
+
 
     def __getattr__(self, name):
         return self.gex_dict[name]
