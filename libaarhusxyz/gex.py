@@ -66,14 +66,12 @@ def _parse(inputfile):
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
         print("header {} parsed".format(header))
-    
-    for channel in ["Channel1", "Channel2"]:
-        if channel in gex.keys():
-            if "Channel1" in channel:
-                NumberOfTurns=gex["General"]["NumberOfTurnsLM"]
-            elif "Channel2" in channel:
-                NumberOfTurns=gex["General"]["NumberOfTurnsHM"]
-            gex[channel]['ApproxDipoleMoment']= gex["General"]["NumberOfTurnsHM"] * gex["General"]["TxLoopArea"] * gex[channel]["TxApproximateCurrent"]
+
+    for channel in range(1, 1 + self.number_channels):
+        channel_key = f"Channel{channel}"
+        turn_key = f"NumberOfTurns{self.transmitter_moment(channel)}"
+        gex[channel_key]['ApproxDipoleMoment'] = gex["General"][turn_key] * gex["General"]["TxLoopArea"] * gex[channel_key]["TxApproximateCurrent"]
+
     return gex
 
 def parse(nameorfile, **kw):
@@ -179,7 +177,7 @@ class GEX(object):
 
     @property
     def tx_orientation(self):
-        looptype = gex.gex_dict['General']['LoopType']
+        looptype = self.gex_dict['General']['LoopType']
         # See the aarhusinv manual for looptype definitions:
         # https://hgg.au.dk/fileadmin/HGGfiles/Software/AarhusInv/AarhusInv_manual_8.pdf
         # pg 49. section 6.1 "line 2, first integer source type"
@@ -197,21 +195,29 @@ class GEX(object):
             tx_orient = 'z'
         return tx_orient
 
+    def transmitter_waveform(self, channel: int = 1):
+        tx_wf_key = f'Waveform{self.transmitter_moment(channel)}Point'
+        return self.gex_dict['General'][tx_wf_key]
+
+    def transmitter_moment(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return self.gex_dict[ch_key]['TransmitterMoment']
+
     def rx_orientation(self, channel: int = 1):
         ch_key = f"Channel{channel}"
-        return (gex.gex_dict[ch_key]['ReceiverPolarizationXYZ']).lower()
+        return self.gex_dict[ch_key]['ReceiverPolarizationXYZ']
 
     def uniform_data_std(self, channel: int = 1):
         ch_key = f"Channel{channel}"
-        return gex.gex_dict[ch_key]['UniformDataSTD']
+        return self.gex_dict[ch_key]['UniformDataSTD']
 
     def no_gates(self, channel: int = 1):
         ch_key = f"Channel{channel}"
-        return gex.gex_dict[ch_key]['NoGates']
+        return self.gex_dict[ch_key]['NoGates']
 
     def remove_initial_gates(self, channel: int = 1):
         ch_key = f"Channel{channel}"
-        return gex.gex_dict[ch_key]['RemoveInitialGates']
+        return self.gex_dict[ch_key]['RemoveInitialGates']
 
 
     def __getattr__(self, name):
@@ -220,23 +226,18 @@ class GEX(object):
     def plot(self, ax=None):
         if ax is None:
             ax = plt.gca()
-        
-        # FIXME!!! Generalize the plotting for any number of moments
-        waveform_hm = self.General['WaveformHMPoint']
-        waveform_lm = self.General['WaveformLMPoint']
 
-        time_input_currents_hm = waveform_hm[:,0]
-        input_currents_hm = waveform_hm[:,1]
-        time_input_currents_lm = waveform_lm[:,0]
-        input_currents_lm = waveform_lm[:,1]
+        waveform = [self.transmitter_waveform(channel) for channel in range(1, 1 + self.number_channels)]
 
-        for channel in range(self.number_channels):
-            ax.vlines(self.gate_times(f'Channel{channel}')[:, 0], 0, 0.5, label=f"Channel{channel} gates")
-        # ax.vlines(self.gate_times('Channel1')[:,0], 0, 0.5, color="red", label="LM gates")
-        # ax.vlines(self.gate_times('Channel2')[:,0], 0.5, 1, color="purple", label="HM gates")
+        time_input_currents = [waveform[channel][:, 0]  for channel in range(self.number_channels)]
+        input_currents = [waveform[channel][:, 1] for channel in range(self.number_channels)]
 
-        ax.plot(time_input_currents_hm, input_currents_hm, label="HM")
-        ax.plot(time_input_currents_lm, input_currents_lm, label="LM")
+        colors = ['red', 'purple']
+        for channel in range(1, 1 + self.number_channels):
+            ax.vlines(self.gate_times(f'Channel{channel}')[:, 0], 0, 0.5, color=colors[channel-1], label=f"Channel{channel} ({self.transmitter_moment(channel)}) gates")
+
+        for channel in range(1, self.number_channels):
+            ax.plot(time_input_currents[channel], input_currents[channel], label=self.transmitter_moment(channel + 1))
 
         ax.set_xlabel("Time")
         ax.set_ylabel("Current")
