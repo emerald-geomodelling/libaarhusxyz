@@ -154,10 +154,16 @@ class GEX(object):
     def dump(self, *arg, **kw):
         _dump_function(self.gex_dict, *arg, **kw)
 
-    def gate_times(self, channel='Channel1'):
+
+    @property
+    def number_channels(self):
+        return np.array(["Channel" in key for key in self.gex_dict.keys()]).sum()
+
+    def gate_times(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
         gex = self.gex_dict
         
-        moment_name = gex[channel].get("TransmitterMoment", "")
+        moment_name = gex[ch_key].get("TransmitterMoment", "")
         
         if "GateTime" + moment_name in gex['General']:
             gate_time_array = gex['General']['GateTime' + moment_name]
@@ -166,10 +172,10 @@ class GEX(object):
         else:
             assert False, "Unable to find General.GateTime or General.GateTime[Moment] in GEX"
 
-        remove_gates_from = int(gex[channel].get('RemoveGatesFrom', 0))
-        no_gates = int(gex[channel].get('NoGates', len(gate_time_array)))
+        remove_gates_from = int(gex[ch_key].get('RemoveGatesFrom', 0))
+        no_gates = int(gex[ch_key].get('NoGates', len(gate_time_array)))
             
-        return gate_time_array[remove_gates_from:remove_gates_from+no_gates,:] + gex[channel].get('GateTimeShift', 0.0) + gex[channel].get('MeaTimeDelay', 0.0)
+        return gate_time_array[remove_gates_from:remove_gates_from+no_gates,:] + gex[ch_key].get('GateTimeShift', 0.0) + gex[ch_key].get('MeaTimeDelay', 0.0)
 
     @property
     def tx_orientation(self):
@@ -191,23 +197,18 @@ class GEX(object):
             tx_orient = 'z'
         return tx_orient
 
-    # FIXME!!! can a property have a channel input?
-    @property
     def rx_orientation(self, channel: int = 1):
         ch_key = f"Channel{channel}"
         return (gex.gex_dict[ch_key]['ReceiverPolarizationXYZ']).lower()
 
-    @property
     def UniformDataSTD(self, channel: int = 1):
         ch_key = f"Channel{channel}"
         return gex.gex_dict[ch_key]['UniformDataSTD']
 
-    @property
     def NoGates(self, channel: int = 1):
         ch_key = f"Channel{channel}"
         return gex.gex_dict[ch_key]['NoGates']
 
-    @property
     def RemoveInitialGates(self, channel: int = 1):
         ch_key = f"Channel{channel}"
         return gex.gex_dict[ch_key]['RemoveInitialGates']
@@ -238,4 +239,3 @@ class GEX(object):
         ax.set_ylabel("Current")
         ax.set_xscale("symlog", linthresh=1e-6)
         ax.legend(loc="upper left")
-        
