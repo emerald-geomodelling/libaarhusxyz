@@ -168,7 +168,7 @@ class GEX(object):
         elif "GateTime" in gex['General']:
             gate_time_array = gex['General']['GateTime']
         else:
-            assert False, "Unable to find General.GateTime or General.GateTime[Moment] in GEX"
+            assert False, f"Unable to find General.GateTime or General.GateTime{moment_name} in GEX"
 
         remove_gates_from = int(gex[ch_key].get('RemoveGatesFrom', 0))
         no_gates = int(gex[ch_key].get('NoGates', len(gate_time_array)))
