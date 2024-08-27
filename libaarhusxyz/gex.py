@@ -201,15 +201,15 @@ class GEX(object):
         ch_key = f"Channel{channel}"
         return (gex.gex_dict[ch_key]['ReceiverPolarizationXYZ']).lower()
 
-    def UniformDataSTD(self, channel: int = 1):
+    def uniform_data_std(self, channel: int = 1):
         ch_key = f"Channel{channel}"
         return gex.gex_dict[ch_key]['UniformDataSTD']
 
-    def NoGates(self, channel: int = 1):
+    def no_gates(self, channel: int = 1):
         ch_key = f"Channel{channel}"
         return gex.gex_dict[ch_key]['NoGates']
 
-    def RemoveInitialGates(self, channel: int = 1):
+    def remove_initial_gates(self, channel: int = 1):
         ch_key = f"Channel{channel}"
         return gex.gex_dict[ch_key]['RemoveInitialGates']
 
