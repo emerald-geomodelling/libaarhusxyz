@@ -221,6 +221,7 @@ class GEX(object):
         if ax is None:
             ax = plt.gca()
         
+        # FIXME!!! Generalize the plotting for any number of moments
         waveform_hm = self.General['WaveformHMPoint']
         waveform_lm = self.General['WaveformLMPoint']
 
@@ -229,8 +230,10 @@ class GEX(object):
         time_input_currents_lm = waveform_lm[:,0]
         input_currents_lm = waveform_lm[:,1]
 
-        ax.vlines(self.gate_times('Channel1')[:,0], 0, 0.5, color="red", label="LM gates")
-        ax.vlines(self.gate_times('Channel2')[:,0], 0.5, 1, color="purple", label="HM gates")
+        for channel in range(self.number_channels):
+            ax.vlines(self.gate_times(f'Channel{channel}')[:, 0], 0, 0.5, label=f"Channel{channel} gates")
+        # ax.vlines(self.gate_times('Channel1')[:,0], 0, 0.5, color="red", label="LM gates")
+        # ax.vlines(self.gate_times('Channel2')[:,0], 0.5, 1, color="purple", label="HM gates")
 
         ax.plot(time_input_currents_hm, input_currents_hm, label="HM")
         ax.plot(time_input_currents_lm, input_currents_lm, label="LM")
@@ -239,3 +242,4 @@ class GEX(object):
         ax.set_ylabel("Current")
         ax.set_xscale("symlog", linthresh=1e-6)
         ax.legend(loc="upper left")
+        plt.tight_layout()
