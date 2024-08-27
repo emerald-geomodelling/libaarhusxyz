@@ -66,10 +66,11 @@ def _parse(inputfile):
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
         print("header {} parsed".format(header))
-
-    for channel in range(1, 1 + self.number_channels):
+    number_channels = np.array(["Channel" in key for key in gex.keys()]).sum()
+    for channel in range(1, 1 + number_channels):
         channel_key = f"Channel{channel}"
-        turn_key = f"NumberOfTurns{self.transmitter_moment(channel)}"
+        print(f"gex[channel_key]['TransmitterMoment'] = {gex[channel_key]['TransmitterMoment']}")
+        turn_key = f"NumberOfTurns{gex[channel_key]['TransmitterMoment']}"
         gex[channel_key]['ApproxDipoleMoment'] = gex["General"][turn_key] * gex["General"]["TxLoopArea"] * gex[channel_key]["TxApproximateCurrent"]
 
     return gex
@@ -234,9 +235,9 @@ class GEX(object):
 
         colors = ['red', 'purple']
         for channel in range(1, 1 + self.number_channels):
-            ax.vlines(self.gate_times(f'Channel{channel}')[:, 0], 0, 0.5, color=colors[channel-1], label=f"Channel{channel} ({self.transmitter_moment(channel)}) gates")
+            ax.vlines(self.gate_times(channel)[:, 0], 0, 0.5, color=colors[channel-1], label=f"Channel{channel} ({self.transmitter_moment(channel)}) gates")
 
-        for channel in range(1, self.number_channels):
+        for channel in range(self.number_channels):
             ax.plot(time_input_currents[channel], input_currents[channel], label=self.transmitter_moment(channel + 1))
 
         ax.set_xlabel("Time")
