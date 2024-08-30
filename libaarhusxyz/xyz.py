@@ -348,8 +348,26 @@ class XYZ(object):
             if colname in self.flightlines.columns:
                 return colname
 
+    def layer_data_data_name(self, channel: int = 1):
+        str_channel = f"0{channel}"[-2:]
+        for df_stub in (f'dbdt_ch{channel}', f'Gate_Ch{str_channel}'):
+            if [string for string in self.layer_data.keys() if df_stub in string]:
+                return df_stub
+
+    def layer_data_std_name(self, channel: int = 1):
+        str_channel = f"0{channel}"[-2:]
+        for df_stub in (f'dbdt_std_ch{channel}', f'STD_Ch{str_channel}'):
+            if [string for string in self.layer_data.keys() if df_stub in string]:
+                return df_stub
+
+    def layer_data_inuse_name(self, channel: int = 1):
+        str_channel = f"0{channel}"[-2:]
+        for df_stub in (f'dbdt_inuse_ch{channel}', f'InUse_Ch{str_channel}'):
+            if [string for string in self.layer_data.keys() if df_stub in string]:
+                return df_stub
+
     def plot_line(self, line_no, ax=None, **kw):
-        """Plots a single flightline/cross section using matplotlib. Any extra
+        """Plots a single flightline as a cross-section using matplotlib. Any extra
         arguments are sent to `ax.plot()`.
 
         """

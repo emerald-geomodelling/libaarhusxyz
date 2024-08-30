@@ -3,7 +3,7 @@ Created on Fri Oct 29 11:36:28 2021
 
 @author: mp
 """
-
+import warnings
 
 import numpy as np
 from datetime import datetime
@@ -66,14 +66,13 @@ def _parse(inputfile):
     for header in sectionheaders:
         gex[header.strip("[").strip("]")]=parse_parameters(sections[header])
         print("header {} parsed".format(header))
-    
-    for channel in ["Channel1", "Channel2"]:
-        if channel in gex.keys():
-            if "Channel1" in channel:
-                NumberOfTurns=gex["General"]["NumberOfTurnsLM"]
-            elif "Channel2" in channel:
-                NumberOfTurns=gex["General"]["NumberOfTurnsHM"]
-            gex[channel]['ApproxDipoleMoment']= gex["General"]["NumberOfTurnsHM"] * gex["General"]["TxLoopArea"] * gex[channel]["TxApproximateCurrent"]
+    number_channels = np.array(["Channel" in key for key in gex.keys()]).sum()
+    for channel in range(1, 1 + number_channels):
+        channel_key = f"Channel{channel}"
+        tx_mom = gex[channel_key].get('TransmitterMoment', None)
+        assert tx_mom is not None, f"gex[{channel_key}]['TransmitterMoment'] does not exist in the Gexfile"
+        turn_key = f"NumberOfTurns{tx_mom}"
+        gex[channel_key]['ApproxDipoleMoment'] = gex["General"][turn_key] * gex["General"]["TxLoopArea"] * gex[channel_key]["TxApproximateCurrent"]
     return gex
 
 def parse(nameorfile, **kw):
@@ -154,22 +153,82 @@ class GEX(object):
     def dump(self, *arg, **kw):
         _dump_function(self.gex_dict, *arg, **kw)
 
-    def gate_times(self, channel='Channel1'):
+
+    @property
+    def number_channels(self):
+        return np.array(["Channel" in key for key in self.gex_dict.keys()]).sum()
+
+    def gate_times(self, channel=1):
         gex = self.gex_dict
         
-        moment_name = gex[channel].get("TransmitterMoment", "")
+        if 'int' in str(type(channel)):
+            ch_key = f"Channel{channel}"
+        elif 'str' in str(type(channel)):
+            warnings.warn("Passing a string in to channel is deprecated and will be removed in a future release.\n"\
+                          "Please change the function call to 'gate_times' to use only an integer",
+                          DeprecationWarning, stacklevel=2)
+            ch_key=channel
+        
+        moment_name = gex[ch_key].get("TransmitterMoment", "")
         
         if "GateTime" + moment_name in gex['General']:
             gate_time_array = gex['General']['GateTime' + moment_name]
         elif "GateTime" in gex['General']:
             gate_time_array = gex['General']['GateTime']
         else:
-            assert False, "Unable to find General.GateTime or General.GateTime[Moment] in GEX"
+            assert False, f"Unable to find General.GateTime or General.GateTime{moment_name} in GEX"
 
-        remove_gates_from = int(gex[channel].get('RemoveGatesFrom', 0))
-        no_gates = int(gex[channel].get('NoGates', len(gate_time_array)))
+        remove_gates_from = int(gex[ch_key].get('RemoveGatesFrom', 0))
+        no_gates = int(gex[ch_key].get('NoGates', len(gate_time_array)))
             
-        return gate_time_array[remove_gates_from:remove_gates_from+no_gates,:] + gex[channel].get('GateTimeShift', 0.0) + gex[channel].get('MeaTimeDelay', 0.0)
+        return gate_time_array[remove_gates_from:remove_gates_from+no_gates,:] + gex[ch_key].get('GateTimeShift', 0.0) + gex[ch_key].get('MeaTimeDelay', 0.0)
+
+    @property
+    def tx_orientation(self):
+        looptype = self.gex_dict['General']['LoopType']
+        # See the aarhusinv manual for looptype definitions:
+        # https://hgg.au.dk/fileadmin/HGGfiles/Software/AarhusInv/AarhusInv_manual_8.pdf
+        # pg 49. section 6.1 "line 2, first integer source type"
+        if looptype == 72:
+            tx_orient = 'z'
+        else:
+            warnings.warn(f"\n*********************************************************************************************\n"+\
+                          f"*\n"+\
+                          f"* Unknown loop-type {looptype}.\n"+\
+                          f"*   Please see https://hgg.au.dk/fileadmin/HGGfiles/Software/AarhusInv/AarhusInv_manual_8.pdf\n"+\
+                          f"*     pg 49. section 6.1 'Line 2, first integer source type'\n"+\
+                          f"*\n"+\
+                          f"* Assuming TX-orientation is 'Z'\n"+\
+                          f"*\n"+\
+                          f"*********************************************************************************************\n",
+                          DeprecationWarning, stacklevel=2)
+            tx_orient = 'z'
+        return tx_orient
+
+    def transmitter_waveform(self, channel: int = 1):
+        tx_wf_key = f'Waveform{self.transmitter_moment(channel)}Point'
+        return self.gex_dict['General'][tx_wf_key]
+
+    def transmitter_moment(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return self.gex_dict[ch_key]['TransmitterMoment']
+
+    def rx_orientation(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return self.gex_dict[ch_key]['ReceiverPolarizationXYZ']
+
+    def uniform_data_std(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return self.gex_dict[ch_key]['UniformDataSTD']
+
+    def no_gates(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return self.gex_dict[ch_key]['NoGates']
+
+    def remove_initial_gates(self, channel: int = 1):
+        ch_key = f"Channel{channel}"
+        return self.gex_dict[ch_key]['RemoveInitialGates']
+
 
     def __getattr__(self, name):
         return self.gex_dict[name]
@@ -177,23 +236,21 @@ class GEX(object):
     def plot(self, ax=None):
         if ax is None:
             ax = plt.gca()
-        
-        waveform_hm = self.General['WaveformHMPoint']
-        waveform_lm = self.General['WaveformLMPoint']
 
-        time_input_currents_hm = waveform_hm[:,0]
-        input_currents_hm = waveform_hm[:,1]
-        time_input_currents_lm = waveform_lm[:,0]
-        input_currents_lm = waveform_lm[:,1]
+        waveform = [self.transmitter_waveform(channel) for channel in range(1, 1 + self.number_channels)]
 
-        ax.vlines(self.gate_times('Channel1')[:,0], 0, 0.5, color="red", label="LM gates")
-        ax.vlines(self.gate_times('Channel2')[:,0], 0.5, 1, color="purple", label="HM gates")
+        time_input_currents = [waveform[channel][:, 0]  for channel in range(self.number_channels)]
+        input_currents = [waveform[channel][:, 1] for channel in range(self.number_channels)]
 
-        ax.plot(time_input_currents_hm, input_currents_hm, label="HM")
-        ax.plot(time_input_currents_lm, input_currents_lm, label="LM")
+        colors = ['red', 'purple']
+        for channel in range(1, 1 + self.number_channels):
+            ax.vlines(self.gate_times(channel)[:, 0], 0, 0.5, color=colors[channel-1], label=f"Channel{channel} ({self.transmitter_moment(channel)}) gates")
+
+        for channel in range(self.number_channels):
+            ax.plot(time_input_currents[channel], input_currents[channel], label=self.transmitter_moment(channel + 1))
 
         ax.set_xlabel("Time")
         ax.set_ylabel("Current")
         ax.set_xscale("symlog", linthresh=1e-6)
         ax.legend(loc="upper left")
-        
+        plt.tight_layout()
