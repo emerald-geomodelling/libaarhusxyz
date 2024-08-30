@@ -3,7 +3,7 @@ Created on Fri Oct 29 11:36:28 2021
 
 @author: mp
 """
-
+import warnings
 
 import numpy as np
 from datetime import datetime
@@ -69,10 +69,10 @@ def _parse(inputfile):
     number_channels = np.array(["Channel" in key for key in gex.keys()]).sum()
     for channel in range(1, 1 + number_channels):
         channel_key = f"Channel{channel}"
-        print(f"gex[channel_key]['TransmitterMoment'] = {gex[channel_key]['TransmitterMoment']}")
-        turn_key = f"NumberOfTurns{gex[channel_key]['TransmitterMoment']}"
+        tx_mom = gex[channel_key].get('TransmitterMoment', None)
+        assert tx_mom is not None, f"gex[{channel_key}]['TransmitterMoment'] does not exist in the Gexfile"
+        turn_key = f"NumberOfTurns{tx_mom}"
         gex[channel_key]['ApproxDipoleMoment'] = gex["General"][turn_key] * gex["General"]["TxLoopArea"] * gex[channel_key]["TxApproximateCurrent"]
-
     return gex
 
 def parse(nameorfile, **kw):
@@ -158,9 +158,13 @@ class GEX(object):
     def number_channels(self):
         return np.array(["Channel" in key for key in self.gex_dict.keys()]).sum()
 
-    def gate_times(self, channel: int = 1):
-        ch_key = f"Channel{channel}"
+    def gate_times(self, channel=1):
         gex = self.gex_dict
+        
+        if 'int' in str(type(channel)):
+            ch_key = f"Channel{channel}"
+        elif 'str' in str(type(channel)):
+            ch_key=channel
         
         moment_name = gex[ch_key].get("TransmitterMoment", "")
         
@@ -185,14 +189,16 @@ class GEX(object):
         if looptype == 72:
             tx_orient = 'z'
         else:
-            print(f"********************")
-            print(f"*")
-            print(f"* Unknown loop-type {looptype}.")
-            print(f"*   Please see https://hgg.au.dk/fileadmin/HGGfiles/Software/AarhusInv/AarhusInv_manual_8.pdf , pg 49. section 6.1 'Line 2, first integer source type'")
-            print(f"*")
-            print(f"* Assuming TX-orientation is 'Z'")
-            print(f"*")
-            print(f"********************")
+            warnings.warn(f"\n*********************************************************************************************\n"+\
+                          f"*\n"+\
+                          f"* Unknown loop-type {looptype}.\n"+\
+                          f"*   Please see https://hgg.au.dk/fileadmin/HGGfiles/Software/AarhusInv/AarhusInv_manual_8.pdf\n"+\
+                          f"*     pg 49. section 6.1 'Line 2, first integer source type'\n"+\
+                          f"*\n"+\
+                          f"* Assuming TX-orientation is 'Z'\n"+\
+                          f"*\n"+\
+                          f"*********************************************************************************************\n",
+                          DeprecationWarning, stacklevel=2)
             tx_orient = 'z'
         return tx_orient
 
