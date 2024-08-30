@@ -164,6 +164,9 @@ class GEX(object):
         if 'int' in str(type(channel)):
             ch_key = f"Channel{channel}"
         elif 'str' in str(type(channel)):
+            warnings.warn("Passing a string in to channel is deprecated and will be removed in a future release.\n"\
+                          "Please change the function call to 'gate_times' to use only an integer",
+                          DeprecationWarning, stacklevel=2)
             ch_key=channel
         
         moment_name = gex[ch_key].get("TransmitterMoment", "")
