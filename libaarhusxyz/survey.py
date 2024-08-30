@@ -24,7 +24,7 @@ class Survey(object):
              geojsonfile: str = None,
              simplify: int = 5):
         """
-        Write survey to file(s)
+        Simplifies lines by removing relatively extraneous vertices while preserving essential shape.
 
         Parameters
         ----------
