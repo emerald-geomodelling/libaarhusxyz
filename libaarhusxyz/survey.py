@@ -14,6 +14,13 @@ class Survey(object):
         self.orig_xyz = orig_xyz
         self.gex = gex
 
+    # FIXME: fill in the rest here
+    # def __str__(self):
+    #     stuff
+
+    # def plot(self):
+    #     Stuff
+
     def dump(self,
              xyzfile: str = None,
              gexfile: str = None,
