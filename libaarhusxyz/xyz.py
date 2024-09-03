@@ -356,7 +356,7 @@ class XYZ(object):
 
     @property
     def alt_column(self):
-        for colname in ("tx_altitude", "TxAltitude", "tx_alt", "alt"): # This is according to alc - file
+        for colname in ("tx_altitude", "TxAltitude", "tx_alt", "alt"):  # This is according to alc - file
             if colname in self.flightlines.columns:
                 return colname
 
