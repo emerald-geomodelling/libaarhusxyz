@@ -343,6 +343,18 @@ class XYZ(object):
                 return colname
 
     @property
+    def tilt_roll_column(self):
+        for colname in ('tilt_y', 'TxRoll', 'angley'):  # This is according to alc - file
+            if colname in self.flightlines.columns:
+                return colname
+
+    @property
+    def tilt_pitch_column(self):
+        for colname in ('tilt_x', 'TxPitch', 'anglex'):  # This is according to alc - file
+            if colname in self.flightlines.columns:
+                return colname
+
+    @property
     def alt_column(self):
         for colname in ("tx_altitude", "TxAltitude", "tx_alt", "alt"): # This is according to alc - file
             if colname in self.flightlines.columns:
