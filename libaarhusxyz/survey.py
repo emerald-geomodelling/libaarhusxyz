@@ -14,9 +14,46 @@ class Survey(object):
         self.orig_xyz = orig_xyz
         self.gex = gex
 
-    def dump(self, xyzfile=None, gexfile=None, alcfile=None, msgpackfile=None, diffmsgpackfile=None, summaryfile=None, geojsonfile=None, simplify=10):
-        # FIXME: fill in documentation here 
-        # if 'simplify' is none all points make the line in geojson, otherwise it's a tolerance in meters
+    # FIXME: fill in the rest here
+    # def __str__(self):
+    #     stuff
+
+    # def plot(self):
+    #     Stuff
+
+    def dump(self,
+             xyzfile: str = None,
+             gexfile: str = None,
+             alcfile: str = None,
+             msgpackfile: str = None,
+             diffmsgpackfile: str = None,
+             summaryfile: str = None,
+             geojsonfile: str = None,
+             simplify: int = 5):
+        """
+        Write survey to file(s)
+
+        Parameters
+        ----------
+        xyzfile :
+            If not None, filepath to write the xyzfile
+        gexfile :
+            If not None, filepath to write the gexfile
+        alcfile :
+            If not None, filepath to write the alcfile
+        msgpackfile :
+            If not None, filepath to write the msgpackfile
+        diffmsgpackfile :
+            If not None, filepath to write the diffmsgpackfile
+        summaryfile :
+            If not None, filepath to write the summaryfile
+        geojsonfile :
+            If not None, filepath to write the geojsonfile
+        simplify :
+            Only applies to the geojsonfile.
+            Simplifies filightlines by removing relatively extraneous vertices while preserving essential shape within {simplify} m.
+            If simplify == 0, no simplification will occur
+        """
         if xyzfile: self.xyz.dump(xyzfile, alcfile=alcfile)
         if gexfile: self.gex.dump(gexfile)
         if msgpackfile:

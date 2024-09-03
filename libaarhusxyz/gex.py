@@ -150,6 +150,10 @@ class GEX(object):
             gex_dict = parse(gex_dict, **kw)
         self.gex_dict = gex_dict
 
+    # FIXME: fill in the rest here
+    # def __str__(self):
+    #     stuff
+
     def dump(self, *arg, **kw):
         _dump_function(self.gex_dict, *arg, **kw)
 
