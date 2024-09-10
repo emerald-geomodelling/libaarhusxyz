@@ -70,3 +70,12 @@ class Survey(object):
                     yaml.dump(self.xyz.summary_dict, codecs.getwriter("utf-8")(f))
         if geojsonfile:
             self.xyz.to_geojson(geojsonfile, simplify=simplify)
+
+    def plot(self):
+        self.gex.plot()
+        self.xyz.plot()
+
+    def __repr__(self):
+        return "%s\n\n%s" % (self.gex, self.xyz)
+    
+        

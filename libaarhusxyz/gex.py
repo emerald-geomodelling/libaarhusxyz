@@ -258,3 +258,23 @@ class GEX(object):
         ax.set_xscale("symlog", linthresh=1e-6)
         ax.legend(loc="upper left")
         plt.tight_layout()
+
+    def __repr__(self):
+        waveform = [self.transmitter_waveform(channel) for channel in range(1, 1 + self.number_channels)]
+        input_times = [len(waveform[channel][:, 0]) for channel in range(self.number_channels)]
+        gate_times = [len(self.gate_times(channel)[:, 0]) for channel in range(1, 1 + self.number_channels)]
+        
+        return "\n".join([
+            (self.header or "[Unnamed system]"),
+            "--------------------------------",
+            "Channels: %s" % self.number_channels,
+            "\n".join([
+                "Channel: %s (%s)\n  Waveworm timepoints: %s\n  Gate times: %s (of which early: %s)" % (
+                    channel,
+                    self.transmitter_moment(channel + 1),
+                    input_times[channel],
+                    gate_times[channel],
+                    (self.gate_times(channel + 1)[:, 0] < self.transmitter_waveform(channel + 1)[:, 0].max()).sum()
+                )
+                for channel in range(self.number_channels)]),
+            ])
