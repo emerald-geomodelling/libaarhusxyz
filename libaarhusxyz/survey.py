@@ -78,4 +78,7 @@ class Survey(object):
     def __repr__(self):
         return "%s\n\n%s" % (self.gex, self.xyz)
     
+    def _ipython_display_(self):
+        self.plot()
+        
         

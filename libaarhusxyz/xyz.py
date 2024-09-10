@@ -613,6 +613,9 @@ class XYZ(object):
             xyz_dict[fline] = line_xyz
         return xyz_dict
 
+    def _ipython_display_(self):
+        self.plot()
+        
 class XYZLine(object):
     def __init__(self, model, line_id):
         self.model = model

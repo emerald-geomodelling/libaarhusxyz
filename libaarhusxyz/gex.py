@@ -278,3 +278,6 @@ class GEX(object):
                 )
                 for channel in range(self.number_channels)]),
             ])
+    
+    def _ipython_display_(self):
+        self.plot()
