@@ -202,9 +202,9 @@ def add_defaults(model, required_columns=None):
 def normalize_depths(model):
     layer_dfs = model.layer_data
     if "dep_bot" in layer_dfs:
-        layer_dfs["dep_bot"] = layer_dfs["dep_bot"].fillna(np.Inf)
+        layer_dfs["dep_bot"] = layer_dfs["dep_bot"].fillna(np.inf)
         if 'dep_top' in layer_dfs.keys():
-            layer_dfs["dep_top"] = layer_dfs["dep_top"].fillna(np.Inf)
+            layer_dfs["dep_top"] = layer_dfs["dep_top"].fillna(np.inf)
         else:
             layer_dfs["dep_top"] = layer_dfs["dep_bot"].shift(1,axis=1)
             layer_dfs["dep_top"].iloc[:,0]=0.0
