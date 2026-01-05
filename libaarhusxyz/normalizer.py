@@ -235,6 +235,32 @@ def calculate_doi_layer(model):
                               1, 0)), columns=layer_dfs["dep_bot"].columns)
 
 
+def _fix_hour_24(datetimestr):
+    """Fix times with hour 24 (e.g., '24:00' or '24:00.5') by converting to 00:xx of the next day.
+
+    Some data sources use 24:00 to represent midnight at the end of a day.
+    This is technically valid per ISO 8601 but pandas doesn't support it.
+    """
+    result = []
+    for dt in datetimestr:
+        if not dt or not isinstance(dt, str):
+            result.append(dt)
+            continue
+        # Match patterns like "24:00", "24:00.5", "24:00:00"
+        match = re.search(r'\b24:(\d{2}(?:[.:]\d+)?)\b', dt)
+        if match:
+            # Parse the date part and add one day
+            time_part = '00:' + match.group(1)
+            date_part = dt[:match.start()].strip()
+            try:
+                parsed_date = pd.to_datetime(date_part) + pd.Timedelta(days=1)
+                dt = parsed_date.strftime('%Y-%m-%d') + ' ' + time_part
+            except:
+                pass  # If parsing fails, leave as-is and let pandas raise the error
+        result.append(dt)
+    return np.array(result)
+
+
 def normalize_dates(model):
     datecol = model.get_column("date")
     timecol = model.get_column("time")
@@ -242,6 +268,8 @@ def normalize_dates(model):
         datestr = model.flightlines[datecol].fillna("").astype(str)
         timestr = model.flightlines[timecol].fillna("").astype(str)
         datetimestr = np.where(datestr != "", datestr + " " + timestr, "")
+        # Fix hour 24 timestamps (e.g., "24:00" -> "00:00" next day)
+        datetimestr = _fix_hour_24(datetimestr)
         timestampcol = model.get_column("timestamp")
         model.flightlines[timestampcol] = pd.Series(pd.to_datetime(datetimestr) - datetime.datetime(1900,1,1)).dt.total_seconds() / (24 * 60 * 60)
 
