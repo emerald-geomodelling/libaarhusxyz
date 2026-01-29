@@ -66,6 +66,18 @@ def df_apply(df, diffdf, rows, dummy_value = None):
                     values = np.where(diffdf[col].values == dummy_value, df.loc[rows, dstcol].values, values)
             df.loc[rows, dstcol] = values
 
+def _case_variants(*names):
+    """Generate all capitalization variants (lower, upper, title) for a list of names,
+    preserving priority order and removing duplicates."""
+    seen = set()
+    result = []
+    for name in names:
+        for variant in (name, name.lower(), name.upper(), name.title()):
+            if variant not in seen:
+                seen.add(variant)
+                result.append(variant)
+    return tuple(result)
+
 class XYZ(object):
     """Usage:
 
@@ -80,6 +92,12 @@ class XYZ(object):
       Read column mappings from filename (a .ALC file)
     normalize=bool (default False)
       Normalize data after reading.
+    extra_mappings=dict, str, or DataFrame (default None)
+      Custom column name mappings for normalization. Can be:
+      - dict: {input_name: canonical_name} e.g. {"Res": "resistivity", "Thick": "height"}
+      - str: path to a CSV file with columns 'libaarhusxyz' and 'input'
+      - DataFrame: with columns 'libaarhusxyz' and 'input'
+      Custom mappings take precedence over default mappings.
 
     Any additional arguments are sent to
     libaarhusxyz.normalizer.normalize()
@@ -143,8 +161,8 @@ class XYZ(object):
         """
         normalizer.normalize(self, **kw)
 
-    def normalize_naming(self, naming_standard="libaarhusxyz"):
-        normalizer.normalize_naming(self, naming_standard)
+    def normalize_naming(self, naming_standard="libaarhusxyz", extra_mappings=None):
+        normalizer.normalize_naming(self, naming_standard, extra_mappings=extra_mappings)
     def normalize_nans(self, nan_value=None):
         normalizer.normalize_nans(self, nan_value)
     def normalize_projection(self):
@@ -323,40 +341,40 @@ class XYZ(object):
 
     @property
     def line_id_column(self):
-        for colname in ("title", "Line", "line", "line_id", "line_no"):
+        for colname in _case_variants("title", "Line", "line", "line_id", "line_no"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def x_column(self):
-        for colname in ("x", "UTMX", "utmx", "lon", "lng"):
+        for colname in _case_variants("x", "UTMX", "utmx", "lon", "lng"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def y_column(self):
-        for colname in ("y", "UTMY", "utmy", "lat"):
+        for colname in _case_variants("y", "UTMY", "utmy", "lat"):
             if colname in self.flightlines.columns:
                 return colname
     @property
     def z_column(self):
-        for colname in ("Topography", "topo", "elevation"):
+        for colname in _case_variants("Topography", "topo", "elevation"):
             if colname in self.flightlines.columns:
                 return colname
 
     @property
     def tilt_roll_column(self):
-        for colname in ('tilt_y', 'TxRoll', 'angley'):  # This is according to alc - file
+        for colname in _case_variants('tilt_y', 'TxRoll', 'angley'):  # This is according to alc - file
             if colname in self.flightlines.columns:
                 return colname
 
     @property
     def tilt_pitch_column(self):
-        for colname in ('tilt_x', 'TxPitch', 'anglex'):  # This is according to alc - file
+        for colname in _case_variants('tilt_x', 'TxPitch', 'anglex'):  # This is according to alc - file
             if colname in self.flightlines.columns:
                 return colname
 
     @property
     def alt_column(self):
-        for colname in ("tx_altitude", "alt", "TxAltitude", "Alt", "tx_alt"):  # This is according to alc - file
+        for colname in _case_variants("tx_altitude", "alt", "TxAltitude", "tx_alt"):  # This is according to alc - file
             if colname in self.flightlines.columns:
                 return colname
 

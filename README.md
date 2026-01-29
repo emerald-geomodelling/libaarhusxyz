@@ -28,6 +28,9 @@ for working with this format in the browser.
 ## Examples
 For usage details, see [Example usage notebook](docs/Example%20usage.ipynb).
 
+## Other documentation 
+Notable changes in functionality, beginning in January 2026, are summarized in the [changelog file](CHANGES.md).  
+
 ## Other tools
 We have developed interface code for the [SimPEG](https://simpeg.xyz/) inversion software to work directly with measured data from SkyTEM systems
 (Tested with 304 and 306) in XYZ format using libaarhusxyz. Example notebooks can be found

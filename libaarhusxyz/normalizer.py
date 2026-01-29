@@ -34,7 +34,7 @@ def map_name_pattern(value):
             return re.sub(row.pattern, row.replacement, value)
     return value
     
-def get_name_mapper(naming_standard="libaarhusxyz"):
+def get_name_mapper(naming_standard="libaarhusxyz", extra_mappings=None):
     mapper = name_mapping.assign(
         **{"dst_name": name_mapping[naming_standard]})
     mapper = mapper.melt(
@@ -49,6 +49,32 @@ def get_name_mapper(naming_standard="libaarhusxyz"):
     mapper["src_name"] = mapper["src_name"].str.lower()
     mapper = mapper.set_index("src_name")["dst_name"]
     mapper = mapper[~mapper.index.duplicated(keep='first')]
+
+    # Merge extra_mappings if provided
+    if extra_mappings is not None:
+        if isinstance(extra_mappings, str):
+            # Load from CSV file
+            extra_df = pd.read_csv(extra_mappings)
+        elif isinstance(extra_mappings, dict):
+            # Convert dict to DataFrame format: keys are input names, values are canonical names
+            extra_df = pd.DataFrame([
+                {"libaarhusxyz": v, "input": k}
+                for k, v in extra_mappings.items()
+            ])
+        else:
+            extra_df = extra_mappings  # Assume it's already a DataFrame
+
+        # Process extra mappings same way as main mappings
+        extra_mapper = extra_df.assign(**{"dst_name": extra_df["libaarhusxyz"]})
+        extra_mapper = extra_mapper.melt("dst_name", var_name="naming_standard", value_name="src_name")
+        extra_mapper = extra_mapper.loc[~extra_mapper.src_name.isna()]
+        extra_mapper["src_name"] = extra_mapper["src_name"].str.lower()
+        extra_mapper = extra_mapper.set_index("src_name")["dst_name"]
+
+        # Merge with custom taking precedence (keep='last' means extra_mappings win)
+        mapper = pd.concat([mapper, extra_mapper])
+        mapper = mapper[~mapper.index.duplicated(keep='last')]
+
     def mapperfn(name):
         newname = map_name_pattern(name)
         lnewname = newname.lower()
@@ -66,10 +92,10 @@ def project(innproj, utproj, xinn, yinn):
     return pyproj.Transformer.from_crs(
         innproj, utproj, always_xy=True).transform(xinn, yinn)
 
-def normalize_headers(model, naming_standard="libaarhusxyz"):
+def normalize_headers(model, naming_standard="libaarhusxyz", extra_mappings=None):
     headers = model.model_info
 
-    mapper = get_name_mapper(naming_standard)
+    mapper = get_name_mapper(naming_standard, extra_mappings=extra_mappings)
     for name in list(headers.keys()):
         headers[mapper(name)] = headers.pop(name)                
             
@@ -77,12 +103,12 @@ def normalize_headers(model, naming_standard="libaarhusxyz"):
     if 'node name(s)' in headers:
         headers["inversion_type"] = headers['node name(s)'].split("_")[0]
 
-def normalize_column_names(model, naming_standard="libaarhusxyz"):
+def normalize_column_names(model, naming_standard="libaarhusxyz", extra_mappings=None):
     df = model.flightlines
     layer_dfs = model.layer_data
     headers = model.model_info
-     
-    mapper = get_name_mapper(naming_standard)
+
+    mapper = get_name_mapper(naming_standard, extra_mappings=extra_mappings)
     df.columns = [mapper(name) for name in df.columns]
 
     for name in list(layer_dfs.keys()):
@@ -191,23 +217,36 @@ def add_defaults(model, required_columns=None):
         for i in range(ldf.columns.max() + 1, NLayers + 1):
             ldf[i] = np.NaN
 
-    if "resistivity_variance_factor" not in layer_dfs:
-        ldf = next(iter(layer_dfs.values()))
-        layer_dfs["resistivity_variance_factor"] = np.nan*ldf
-        layer_dfs["doi_layer"] = ldf*0 + 2
-        layer_dfs["height"] = ldf*0 + 50
-        layer_dfs["z_bottom"] = ldf*0 + 500
+    ldf = next(iter(layer_dfs.values()))
+    defaults = {
+        'resistivity_variance_factor':np.nan,
+        'doi_layer':2,
+        'height':np.nan,
+    }
+    for key, default in defaults.items():
+        if key not in layer_dfs:
+            layer_dfs[key] = 0*ldf+default
 
             
 def normalize_depths(model):
     layer_dfs = model.layer_data
-    if "dep_bot" in layer_dfs:
-        layer_dfs["dep_bot"] = layer_dfs["dep_bot"].fillna(np.inf)
-        if 'dep_top' in layer_dfs.keys():
-            layer_dfs["dep_top"] = layer_dfs["dep_top"].fillna(np.inf)
+    if "dep_bot" not in layer_dfs:
+        if 'height' in layer_dfs:
+            layer_dfs["dep_bot"] = np.cumsum(layer_dfs['height'],axis=1)
         else:
-            layer_dfs["dep_top"] = layer_dfs["dep_bot"].shift(1,axis=1)
-            layer_dfs["dep_top"].iloc[:,0]=0.0
+            ldf = next(iter(layer_dfs.values()))
+            if ldf:
+                layer_dfs["dep_bot"] = np.nan*ldf
+            else:
+                return
+
+    layer_dfs["dep_bot"] = layer_dfs["dep_bot"].fillna(np.inf)
+    if 'dep_top' in layer_dfs.keys():
+        layer_dfs["dep_top"] = layer_dfs["dep_top"].fillna(np.inf)
+    else:
+        layer_dfs["dep_top"] = layer_dfs["dep_bot"].shift(1, axis=1)
+        layer_dfs["dep_top"].iloc[:, 0] = 0.0
+
 
 def calculate_z(model):
     df = model.flightlines
@@ -248,6 +287,13 @@ def normalize_dates(model):
 
 def normalize_sort_datetime(model):
     timestampcol = model.get_column("timestamp")
+    if not timestampcol:
+        print('No timestamp column in detected. Skipping normalize_sort_datetime...')
+        return
+    elif timestampcol not in model.flightlines.columns:
+        print(f'Column {timestampcol} not found in flightlines DataFrame. Skipping normalize_sort_datetime...')
+        return
+
     already_sorted = ((model.flightlines[timestampcol][1:].values - model.flightlines[timestampcol][:-1].values) < 0).max()
     if already_sorted:
         model.flightlines.sort_values(by=timestampcol, inplace=True)
@@ -276,12 +322,12 @@ def normalize_nans(model, nan_value=None):
 
     # FIXME: Convert column types from O here?
         
-def normalize_naming(model, naming_standard="libaarhusxyz"):
-    normalize_headers(model, naming_standard)
-    normalize_column_names(model, naming_standard)
+def normalize_naming(model, naming_standard="libaarhusxyz", extra_mappings=None):
+    normalize_headers(model, naming_standard, extra_mappings=extra_mappings)
+    normalize_column_names(model, naming_standard, extra_mappings=extra_mappings)
     model.model_info["naming_standard"] = naming_standard
         
-def normalize(model, project_crs=None, required_columns=None, naming_standard="libaarhusxyz", nan_value=None):
+def normalize(model, project_crs=None, required_columns=None, naming_standard="libaarhusxyz", nan_value=None, extra_mappings=None):
     """This function
          * Normalizes naming and format to our internal format
          * Replaces * with NaN:s
@@ -289,9 +335,18 @@ def normalize(model, project_crs=None, required_columns=None, naming_standard="l
          * Calculates xdist
          * Calculate z coordinates
          * Add missing columns (filled with NaNs)
+
+    Parameters
+    ----------
+    extra_mappings : dict, str, or DataFrame, optional
+        Custom column name mappings. Can be:
+        - dict: {input_name: canonical_name} e.g. {"Res": "resistivity", "Thick": "height"}
+        - str: path to a CSV file with columns 'libaarhusxyz' and 'input'
+        - DataFrame: with columns 'libaarhusxyz' and 'input'
+        Custom mappings take precedence over default mappings.
     """
 
-    normalize_naming(model, naming_standard)
+    normalize_naming(model, naming_standard, extra_mappings=extra_mappings)
 
     normalize_nans(model, nan_value)
     normalize_projection(model)
