@@ -235,7 +235,7 @@ def normalize_depths(model):
             layer_dfs["dep_bot"] = np.cumsum(layer_dfs['height'],axis=1)
         else:
             ldf = next(iter(layer_dfs.values()))
-            if ldf:
+            if not ldf.empty:
                 layer_dfs["dep_bot"] = np.nan*ldf
             else:
                 return
