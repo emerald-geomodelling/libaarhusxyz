@@ -251,7 +251,7 @@ def normalize_depths(model):
 def calculate_z(model):
     df = model.flightlines
     layer_dfs = model.layer_data
-    if "dep_bot" in layer_dfs:
+    if "dep_bot" in layer_dfs and model.z_column is not None:
         layer_dfs["z_bottom"] = np.meshgrid(layer_dfs["dep_bot"].columns, df[model.z_column])[1] - layer_dfs["dep_bot"]
         layer_dfs["z_top"] = np.meshgrid(layer_dfs["dep_top"].columns, df[model.z_column])[1] - layer_dfs["dep_top"]
 

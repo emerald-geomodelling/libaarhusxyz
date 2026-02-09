@@ -356,7 +356,7 @@ class XYZ(object):
                 return colname
     @property
     def z_column(self):
-        for colname in _case_variants("Topography", "topo", "elevation"):
+        for colname in _case_variants("Topography", "topo", "elevation", "DEM"):
             if colname in self.flightlines.columns:
                 return colname
 
