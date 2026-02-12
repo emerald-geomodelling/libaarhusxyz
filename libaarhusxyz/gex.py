@@ -54,7 +54,9 @@ def parse_parameters(textlines):
     for key in section.keys():
         if len(section[key])==1:
             section[key]=section[key][0]
-        if len(section[key])==1:
+        if isinstance(section[key], list) and len(section[key])==0:
+            section[key]=""
+        elif len(section[key])==1:
             section[key]=section[key][0]
         else:
             section[key]=np.array(section[key])
@@ -119,7 +121,9 @@ def _dump(gex, f, columns=None):
             a=gex[key1][key2]
             # the follwoing is a mess because the required format is depending on the paramter 
             if type(a) is np.ndarray:
-                if type(a[0]) is np.str_:
+                if a.size == 0:
+                    lines.append('{0}='.format(key2))
+                elif type(a[0]) is np.str_:
                     lines.append('{0}={1}'.format(key2, ' '.join(['{}'.format(item) for item in a[:] ]))) 
                 elif a.ndim==1:
                     digits=1
