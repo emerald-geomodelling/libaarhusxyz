@@ -237,7 +237,7 @@ class XYZ(object):
         
     @property
     def model_info(self):
-        return self.model_dict["model_info"]
+        return self.model_dict.get("model_info", {})
     @model_info.setter
     def model_info(self, value):
         self.model_dict["model_info"] = value
@@ -589,7 +589,8 @@ class XYZ(object):
 
         rows = diff.flightlines.apply_idx.values
 
-        dummy_value = diff.model_info.get("diff_dummy", None)
+        diff_info = diff.model_dict.get("model_info", {})
+        dummy_value = diff_info.get("diff_dummy", None) if isinstance(diff_info, dict) else None
         
         df_apply(res.flightlines, diff.flightlines, rows, dummy_value = dummy_value)
         
