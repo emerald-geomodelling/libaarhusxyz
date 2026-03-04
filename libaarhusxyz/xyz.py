@@ -271,7 +271,7 @@ class XYZ(object):
     
     @property
     def layer_params(self):
-        layer_dfs = self.model_dict["layer_data"]
+        layer_dfs = self.model_dict.get("layer_data", {})
         if not len(layer_dfs):
             return pd.DataFrame({"layer": []})
         layer_constants = pd.DataFrame(index=next(iter(layer_dfs.values())).columns)
