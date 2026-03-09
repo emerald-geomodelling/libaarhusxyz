@@ -19,7 +19,9 @@ setuptools.setup(
         "numpy",
         "pandas",
         "pyproj",
-        "matplotlib"
+        "matplotlib",
+        "msgpack",
+        "msgpack_numpy",
     ],
     extras_require={
         'normalisation': ["pryproj", "projnames"],
