@@ -15,7 +15,7 @@ def coerce(s):
         return s
 
 def df2dict(df):
-    return {col: coerce(df[col]).values for col in df.columns}
+    return {col: coerce(df[col]).to_numpy() for col in df.columns}
 
 def dfs2dict(d):    
     if isinstance(d, dict):
