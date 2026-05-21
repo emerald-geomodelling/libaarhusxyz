@@ -21,7 +21,7 @@ setuptools.setup(
         "pyproj",
         "matplotlib",
         "msgpack",
-        "msgpack_numpy",
+        "msgpack-numpy",
     ],
     extras_require={
         'normalisation': ["pryproj", "projnames"],
