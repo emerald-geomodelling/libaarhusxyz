@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.0.45
+
+### Changed
+- Migrate off `pkg_resources` (removed in setuptools 81) to `importlib.resources`
+  for loading bundled `normalizer.csv` / `normalizer_pattern.csv`.
+
+### Fixed (unreleased on PyPI since 0.0.44)
+- Fallback on `NumberOfTurns` when the key does not exist.
+- GEX: handle empty values in the parse/dump round-trip.
+- Fix `layer_params` property crash on an incomplete `model_dict`.
+- Fix `apply_diff` and `model_info` for sparse diff objects.
+- Fix `dict2dfs` handling of `None` values in msgpack diff `layer_data`.
+
 ## 2026-01-29
 
 ### Added case-insensitive column name detection in `xyz.py`
