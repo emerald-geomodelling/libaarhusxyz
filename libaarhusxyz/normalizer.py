@@ -4,12 +4,12 @@ import pyproj
 import re
 import datetime
 import csv
-import pkg_resources
+from importlib.resources import files
 
 def _read_csv(f):
     return pd.read_csv(f)
 
-with pkg_resources.resource_stream("libaarhusxyz", "normalizer.csv") as f:
+with files("libaarhusxyz").joinpath("normalizer.csv").open("rb") as f:
     name_mapping = _read_csv(f)
 
 def complete_name_mapping(name_mapping):
@@ -25,7 +25,7 @@ def complete_name_mapping(name_mapping):
 
 complete_name_mapping(name_mapping)
     
-with pkg_resources.resource_stream("libaarhusxyz", "normalizer_pattern.csv") as f:
+with files("libaarhusxyz").joinpath("normalizer_pattern.csv").open("rb") as f:
     name_mapping_patterns = _read_csv(f)
 
 def map_name_pattern(value):
