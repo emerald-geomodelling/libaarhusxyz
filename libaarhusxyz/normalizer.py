@@ -215,7 +215,7 @@ def add_defaults(model, required_columns=None):
     NLayers = np.array([ldf.columns.max() for ldf in layer_dfs.values()]).max()
     for key, ldf in layer_dfs.items():
         for i in range(ldf.columns.max() + 1, NLayers + 1):
-            ldf[i] = np.NaN
+            ldf[i] = np.nan
 
     ldf = next(iter(layer_dfs.values()))
     defaults = {

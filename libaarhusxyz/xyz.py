@@ -427,7 +427,7 @@ class XYZ(object):
             if "%" in label:
                 i = {"channel": channel,
                      "gate": gate,
-                     "time": times[gate] if times is not None else np.NaN}
+                     "time": times[gate] if times is not None else np.nan}
                 l = label % i
             elif gate == 0:
                 l = label
