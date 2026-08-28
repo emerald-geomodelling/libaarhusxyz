@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.47
+2026-08-28
+
+### Fixed
+- The `normalisation` extra required `pryproj`, which does not exist on PyPI, so
+  `pip install libaarhusxyz[normalisation]` could not resolve. Corrected to `pyproj`, which
+  is in any case already an unconditional dependency.
+
 ## 0.0.46
 2026-08-28
 
