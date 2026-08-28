@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.0.46
+2026-08-28
+
+### Fixed
+- numpy 2: `np.NaN` -> `np.nan` (removed in numpy 2.0, raises `AttributeError`) in
+  `normalizer.add_defaults`, where short layer frames are padded out to `NLayers`, and in
+  `xyz.XYZ` gate-label formatting where `time` falls back to NaN because no gate times are
+  available. The first fires on any model whose layer dataframes do not all have the same
+  number of columns.
+
+### Added
+- `tests/test_numpy2_removed_names.py`: an AST-based source guard that fails if any numpy name
+  the installed numpy no longer has is referenced anywhere in the package, plus a negative
+  control proving the check can actually see one.
+
 ## 0.0.45
 
 ### Changed
