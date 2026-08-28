@@ -22,7 +22,7 @@ setuptools.setup(
         "matplotlib"
     ],
     extras_require={
-        'normalisation': ["pryproj", "projnames"],
+        'normalisation': ["pyproj", "projnames"],
         'tests': ['nose2', 'downfile'],
     }
 )
